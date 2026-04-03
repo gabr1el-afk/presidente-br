@@ -511,9 +511,11 @@ function runLoop() {
     updateAlertState();
     triggerCriticalAlerts();
     checkGameOver();
+    refreshPassivePanel();
   }
 
-  renderAll();
+  updateDecisionLivePanel();
+  renderLiveUI();
 }
 
 function decisionHeartbeat() {
@@ -529,7 +531,11 @@ function decisionHeartbeat() {
   if (state.decisionClockMs >= intervalMs) {
     state.decisionClockMs = 0;
     spawnDecision();
-    renderAll();
+    if (state.currentPanel === "decisions" || !panelNeedsStableDom()) {
+      renderAll();
+    } else {
+      renderLiveUI();
+    }
   }
 }
 
@@ -803,6 +809,9 @@ function processDecisionTimeouts() {
     playTone("alert");
   });
   state.activeDecisions = state.activeDecisions.filter((decision) => tickAtual < decision.deadline);
+  if (state.currentPanel === "decisions") {
+    renderDecisionsPanel();
+  }
 }
 
 function applyDecisionEffect(effect, title) {
@@ -1209,7 +1218,7 @@ function renderDecisionsPanel() {
       <article class="decision-card ${remaining < 1400 ? "expiring" : ""}" data-card-id="${decision.id}">
         <div class="decision-top">
           <strong>${decision.title}</strong>
-          <span class="panel-chip">${remaining} ticks</span>
+          <span class="panel-chip" data-decision-remaining="${decision.id}">${remaining} ticks</span>
         </div>
         <p>${decision.body}</p>
         <div class="decision-actions">
@@ -1243,6 +1252,23 @@ function renderDecisionsPanel() {
   }
   elements.panelContent.querySelectorAll(".decision-btn").forEach((button) => {
     button.addEventListener("click", () => answerDecision(button.dataset.id, button.dataset.option));
+  });
+}
+
+function updateDecisionLivePanel() {
+  if (state.currentPanel !== "decisions") {
+    return;
+  }
+  elements.panelChip.textContent = `${state.activeDecisions.length} abertas`;
+  state.activeDecisions.forEach((decision) => {
+    const chip = elements.panelContent.querySelector(`[data-decision-remaining="${decision.id}"]`);
+    const card = elements.panelContent.querySelector(`[data-card-id="${decision.id}"]`);
+    if (!chip || !card) {
+      return;
+    }
+    const remaining = Math.max(0, decision.deadline - tickAtual);
+    chip.textContent = `${remaining} ticks`;
+    card.classList.toggle("expiring", remaining < 1400);
   });
 }
 
@@ -1528,6 +1554,22 @@ function renderAll() {
   renderStatsStrip();
   drawApprovalEmoji();
   renderPanel();
+}
+
+function renderLiveUI() {
+  updateHeader();
+  renderStatsStrip();
+  drawApprovalEmoji();
+}
+
+function panelNeedsStableDom(panel = state.currentPanel) {
+  return ["economy", "decisions", "settings"].includes(panel);
+}
+
+function refreshPassivePanel() {
+  if (!panelNeedsStableDom()) {
+    renderPanel();
+  }
 }
 
 elements.playButton.addEventListener("click", () => {
