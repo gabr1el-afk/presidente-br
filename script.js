@@ -15,6 +15,8 @@ const COUNTRIES = {
     name: "Brasil",
     flag: "🇧🇷",
     title: "Presidente do Brasil",
+    brandType: "image",
+    brandImage: "file:///C:/Users/perei/OneDrive/Desktop/BRF.jpg",
     difficultyName: "Mandato Inicial",
     start: { gdp: 2.3, inflation: 6.8, popularity: 57, cash: 170, unemployment: 10.4, taxRate: 28 },
     approval: { economia: 54, saude: 62, seguranca: 44, educacao: 58 },
@@ -29,6 +31,7 @@ const COUNTRIES = {
     name: "Argentina",
     flag: "🇦🇷",
     title: "Presidente da Argentina",
+    brandType: "flag",
     difficultyName: "Crise Cambial",
     start: { gdp: 0.74, inflation: 23.5, popularity: 48, cash: 42, unemployment: 12.6, taxRate: 32 },
     approval: { economia: 28, saude: 52, seguranca: 39, educacao: 49 },
@@ -43,6 +46,7 @@ const COUNTRIES = {
     name: "Venezuela",
     flag: "🇻🇪",
     title: "Presidente da Venezuela",
+    brandType: "flag",
     difficultyName: "Colapso Estrutural",
     start: { gdp: 0.39, inflation: 28.4, popularity: 41, cash: 18, unemployment: 16.4, taxRate: 34 },
     approval: { economia: 18, saude: 34, seguranca: 29, educacao: 31 },
@@ -57,6 +61,7 @@ const COUNTRIES = {
     name: "África do Sul",
     flag: "🇿🇦",
     title: "Presidente da África do Sul",
+    brandType: "flag",
     difficultyName: "Desemprego Crítico",
     start: { gdp: 0.86, inflation: 11.8, popularity: 46, cash: 74, unemployment: 24.2, taxRate: 27 },
     approval: { economia: 31, saude: 57, seguranca: 35, educacao: 46 },
@@ -231,7 +236,10 @@ const EVENT_LIBRARY = [
 ];
 
 const elements = {
-  title: document.querySelector(".title-row h1"),
+  countryTitle: document.getElementById("countryTitle"),
+  brandEmblem: document.getElementById("brandEmblem"),
+  brandImage: document.getElementById("brandImage"),
+  brandFallback: document.getElementById("brandFallback"),
   difficultyPill: document.getElementById("difficultyPill"),
   timeLabel: document.getElementById("timeLabel"),
   playButton: document.getElementById("playButton"),
@@ -931,7 +939,17 @@ function statRatio(stat) {
 }
 
 function updateHeader() {
-  elements.title.textContent = `${country().title} ${country().flag}`;
+  elements.countryTitle.textContent = country().title;
+  if (country().brandType === "image") {
+    elements.brandImage.classList.remove("hidden");
+    elements.brandImage.src = country().brandImage;
+    elements.brandImage.alt = country().name;
+    elements.brandFallback.classList.add("hidden");
+  } else {
+    elements.brandImage.classList.add("hidden");
+    elements.brandFallback.classList.remove("hidden");
+    elements.brandFallback.textContent = country().flag;
+  }
   elements.difficultyPill.textContent = country().difficultyName;
 }
 
@@ -1233,16 +1251,6 @@ function renderSettingsPanel() {
   setPanelHeader("Ajustes", "Configurações", jogoRodando ? `${velocidadeJogo}x` : "Pausado");
   elements.panelContent.innerHTML = `
     <div class="settings-grid">
-      <article class="settings-card">
-        <span class="mini-label">Início do jogo</span>
-        <strong>Pausado</strong>
-        <span class="settings-line">Toda nova partida começa pausada.</span>
-      </article>
-      <article class="settings-card">
-        <span class="mini-label">País</span>
-        <strong>${country().flag} ${country().name}</strong>
-        <span class="settings-line">O cenário atual muda a tensão econômica e política.</span>
-      </article>
       <article class="settings-card">
         <span class="mini-label">Modo de jogo</span>
         <strong>${state.settings.gameMode}</strong>
