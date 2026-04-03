@@ -1,0 +1,495 @@
+:root {
+  --bg-1: #f7f1e4;
+  --bg-2: #dce8d8;
+  --panel: rgba(255, 252, 246, 0.86);
+  --panel-strong: rgba(255, 252, 246, 0.96);
+  --line: rgba(44, 62, 44, 0.08);
+  --text: #203126;
+  --muted: #687a6b;
+  --green: #15803d;
+  --yellow: #c68a18;
+  --red: #c43a32;
+  --navy: #1f4b99;
+  --shadow: 0 22px 60px rgba(41, 55, 41, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(198, 138, 24, 0.18), transparent 30%),
+    radial-gradient(circle at 100% 10%, rgba(21, 128, 61, 0.18), transparent 28%),
+    linear-gradient(160deg, var(--bg-1) 0%, #eef5ed 50%, var(--bg-2) 100%);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(21, 128, 61, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(21, 128, 61, 0.04) 1px, transparent 1px);
+  background-size: 42px 42px;
+  pointer-events: none;
+}
+
+.app-shell {
+  width: min(1360px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 22px 0 34px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px);
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px;
+  margin-bottom: 18px;
+  align-items: center;
+}
+
+.brand-block h1,
+.section-heading h2,
+.mission-panel h2,
+.advisor-panel h2,
+.modal h2,
+.panel h2 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.brand-block p,
+.mission-panel p,
+.advisor-panel p,
+.impact-summary,
+.news-item p,
+.decision-card p,
+.timeline-item p,
+.modal p {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.eyebrow {
+  display: inline-block;
+  margin-bottom: 8px;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.topbar-side {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.difficulty-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.difficulty-picker label {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.difficulty-picker select {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 14px;
+  background: var(--panel-strong);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.turn-box {
+  min-width: 190px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(31, 75, 153, 0.08);
+}
+
+.turn-label {
+  display: block;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.turn-box strong {
+  display: block;
+  font-size: 1.4rem;
+  margin: 4px 0 12px;
+}
+
+.progress-track {
+  width: 100%;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(31, 75, 153, 0.14);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 25%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #1f4b99, #3ea0ff);
+  transition: width 0.45s ease;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.8fr);
+  gap: 18px;
+}
+
+.main-column,
+.side-column {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.hud-grid {
+  position: sticky;
+  top: 14px;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.hud-card {
+  padding: 18px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: var(--panel-strong);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+}
+
+.hud-card.flash {
+  animation: pop 0.45s ease;
+}
+
+.hud-card.good {
+  background: rgba(21, 128, 61, 0.14);
+}
+
+.hud-card.warn {
+  background: rgba(198, 138, 24, 0.16);
+}
+
+.hud-card.bad {
+  background: rgba(196, 58, 50, 0.14);
+}
+
+.hud-card:hover,
+.decision-card:hover,
+.panel:hover {
+  transform: translateY(-2px);
+}
+
+.hud-icon {
+  font-size: 1.35rem;
+}
+
+.hud-title,
+.hud-delta,
+.advisor-meta,
+.status-chip {
+  color: var(--muted);
+}
+
+.hud-value {
+  font-size: 1.35rem;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.9fr;
+  gap: 18px;
+}
+
+.mission-panel,
+.advisor-panel,
+.decision-panel,
+.news-panel,
+.impact-panel,
+.chart-panel,
+.side-column .panel {
+  padding: 22px;
+}
+
+.mission-panel {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+}
+
+.mission-copy {
+  max-width: 54ch;
+}
+
+.primary-btn,
+.option-btn {
+  border: none;
+  border-radius: 15px;
+  padding: 13px 18px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+}
+
+.primary-btn {
+  min-width: 170px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--navy), #2e7fd1);
+  box-shadow: 0 16px 32px rgba(31, 75, 153, 0.24);
+}
+
+.primary-btn:hover,
+.option-btn:hover {
+  transform: translateY(-2px);
+}
+
+.primary-btn:disabled,
+.option-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(21, 128, 61, 0.1);
+  font-weight: 700;
+}
+
+.status-chip-warn {
+  background: rgba(198, 138, 24, 0.12);
+}
+
+.decision-list,
+.news-feed,
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.decision-card,
+.news-item,
+.timeline-item {
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.56);
+  padding: 16px;
+}
+
+.decision-card.answered {
+  border-color: rgba(21, 128, 61, 0.22);
+  background: rgba(21, 128, 61, 0.08);
+}
+
+.decision-card h3,
+.news-item h3,
+.timeline-item h3 {
+  margin: 0 0 8px;
+}
+
+.option-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.option-btn {
+  background: rgba(31, 75, 153, 0.09);
+  color: var(--text);
+}
+
+.option-btn.active {
+  color: #fff;
+  background: linear-gradient(135deg, var(--green), #27ae60);
+}
+
+.news-item {
+  animation: slideIn 0.35s ease;
+}
+
+.news-tag {
+  display: inline-flex;
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(31, 75, 153, 0.08);
+  color: var(--navy);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.impact-list {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.impact-list li {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(31, 75, 153, 0.06);
+  font-weight: 600;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.chart-panel canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.timeline-item strong {
+  color: var(--navy);
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(21, 27, 24, 0.64);
+  padding: 20px;
+  z-index: 20;
+}
+
+.hidden {
+  display: none;
+}
+
+.modal {
+  width: min(720px, 100%);
+  padding: 28px;
+}
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 22px 0;
+}
+
+.result-item {
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(31, 75, 153, 0.06);
+}
+
+.result-item span {
+  display: block;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@keyframes pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 1180px) {
+  .layout,
+  .hero-grid,
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hud-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    position: static;
+  }
+}
+
+@media (max-width: 760px) {
+  .app-shell {
+    width: min(100% - 16px, 1360px);
+  }
+
+  .topbar,
+  .mission-panel,
+  .section-heading {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hud-grid,
+  .result-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .option-row {
+    flex-direction: column;
+  }
+
+  .primary-btn {
+    width: 100%;
+  }
+}
