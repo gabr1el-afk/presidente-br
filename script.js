@@ -1320,7 +1320,6 @@ function renderEndgame(reason, allowReelection = false) {
 }
 
 function handleReelection() {
-  playTone("good");
   state.termNumber += 1;
   state.difficultyLevel += 1;
   document.body.classList.add("reelection-mode");
@@ -1409,7 +1408,6 @@ function bindSettingsControls() {
   elements.panelContent.querySelectorAll(".mode-btn").forEach((button) => {
     button.addEventListener("click", () => {
       state.settings.gameMode = button.dataset.mode;
-      playTone("click");
       renderSettingsPanel();
     });
   });
@@ -1425,7 +1423,6 @@ function bindSettingsControls() {
       if (setting === "theme") {
         state.settings.theme = value;
         document.body.classList.toggle("dark-theme", value === "dark");
-        playTone("click");
       }
       renderSettingsPanel();
       renderAll();
@@ -1484,19 +1481,16 @@ function renderAll() {
 
 elements.playButton.addEventListener("click", () => {
   jogoRodando = true;
-  playTone("click");
 });
 
 elements.pauseButton.addEventListener("click", () => {
   jogoRodando = false;
-  playTone("click");
 });
 
 elements.speedButtons.forEach((button) => {
   button.addEventListener("click", () => {
     velocidadeJogo = Number(button.dataset.speed);
     elements.speedButtons.forEach((item) => item.classList.toggle("active", item === button));
-    playTone("click");
   });
 });
 
@@ -1510,8 +1504,18 @@ elements.approvalEmojis.forEach((button) => {
     setActivePanel("indicators");
     elements.approvalEmojis.forEach((item) => item.classList.remove("active"));
     button.classList.add("active");
-    playTone("click");
   });
+});
+
+document.addEventListener("click", (event) => {
+  const button = event.target.closest("button");
+  if (!button) {
+    return;
+  }
+  if (button.matches(".decision-btn")) {
+    return;
+  }
+  playTone("click");
 });
 
 elements.restartButton.addEventListener("click", () => {
