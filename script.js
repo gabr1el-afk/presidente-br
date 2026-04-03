@@ -655,9 +655,11 @@ function sliderRow(key, label, value) {
 
 function bindEconomyControls() {
   elements.panelContent.querySelectorAll("input[data-finance]").forEach((input) => {
+    input.style.setProperty("--range-progress", `${input.value}%`);
     input.addEventListener("input", () => {
       const key = input.dataset.finance;
       const nextValue = Number(input.value);
+      input.style.setProperty("--range-progress", `${input.value}%`);
       if (key.startsWith("gasto") && key !== "eficienciaEstado") {
         const totalOtherSpending = Object.entries(state.finance)
           .filter(([entryKey]) => entryKey.startsWith("gasto") && entryKey !== "eficienciaEstado" && entryKey !== key)
