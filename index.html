@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Presidente BRF - Simulador Econômico</title>
+  <style>
+    :root {
+      --bg: #eef3ea;
+      --panel: rgba(255, 255, 255, 0.86);
+      --panel-strong: rgba(255, 255, 255, 0.94);
+      --text: #17321f;
+      --muted: #5f7565;
+      --accent: #0f8b4c;
+      --accent-2: #d8a73b;
+      --danger: #c2483f;
+      --warning: #d6771c;
+      --shadow: 0 18px 45px rgba(30, 53, 36, 0.14);
+      --border: rgba(22, 57, 31, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(216, 167, 59, 0.18), transparent 30%),
+        radial-gradient(circle at top right, rgba(15, 139, 76, 0.18), transparent 28%),
+        linear-gradient(160deg, #f8fbf6 0%, #edf4ea 45%, #dbe9dd 100%);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(15, 139, 76, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(15, 139, 76, 0.03) 1px, transparent 1px);
+      background-size: 36px 36px;
+      pointer-events: none;
+    }
+
+    .container {
+      width: min(1200px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 40px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 22px;
+    }
+
+    .hero-card,
+    .panel,
+    .stat-card,
+    .decision-card,
+    .log-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-card {
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      width: 220px;
+      height: 220px;
+      right: -60px;
+      top: -80px;
+      background: radial-gradient(circle, rgba(15, 139, 76, 0.18), transparent 65%);
+      border-radius: 50%;
+    }
+
+    .hero h1 {
+      margin: 0 0 12px;
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      line-height: 1;
+    }
+
+    .hero p {
+      margin: 0 0 20px;
+      max-width: 62ch;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .status-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .status-pill {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(15, 139, 76, 0.1);
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .panel {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .panel h2,
+    .section-title {
+      margin: 0 0 12px;
+      font-size: 1rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .turn-display {
+      font-size: 3rem;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .progress-wrap {
+      margin-top: 12px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 14px;
+      border-radius: 999px;
+      background: rgba(23, 50, 31, 0.1);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 10%;
+      background: linear-gradient(90deg, var(--accent), #4cc57f);
+      border-radius: inherit;
+      transition: width 0.4s ease;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .stat-card {
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .stat-card.flash {
+      animation: pulse 0.5s ease;
+    }
+
+    .stat-card:hover,
+    .decision-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 22px 50px rgba(30, 53, 36, 0.18);
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: clamp(1.4rem, 2vw, 2rem);
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .stat-trend {
+      font-size: 0.92rem;
+      font-weight: 600;
+    }
+
+    .trend-up {
+      color: var(--accent);
+    }
+
+    .trend-down {
+      color: var(--danger);
+    }
+
+    .trend-neutral {
+      color: var(--muted);
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.3fr 0.9fr;
+      gap: 20px;
+    }
+
+    .decisions-panel,
+    .side-panel {
+      background: transparent;
+    }
+
+    .decisions-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .decision-card {
+      padding: 18px;
+      background: var(--panel-strong);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .decision-card h3 {
+      margin: 0;
+      font-size: 1.15rem;
+    }
+
+    .decision-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+      min-height: 72px;
+    }
+
+    .decision-card button,
+    .primary-btn {
+      border: none;
+      border-radius: 14px;
+      padding: 13px 16px;
+      font-size: 0.98rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s ease, opacity 0.2s ease, background 0.2s ease;
+      background: linear-gradient(135deg, var(--accent), #31ab67);
+      color: #fff;
+    }
+
+    .decision-card button:hover,
+    .primary-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .decision-card button:disabled,
+    .primary-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .feedback-box,
+    .event-box,
+    .advisor-box,
+    .summary-box {
+      padding: 20px;
+      border-radius: 20px;
+      background: var(--panel-strong);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+
+    .feedback-box strong,
+    .event-box strong,
+    .advisor-box strong,
+    .summary-box strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+
+    .feedback-box p,
+    .event-box p,
+    .advisor-box p,
+    .summary-box p {
+      margin: 0;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+
+    .event-box {
+      border-left: 6px solid var(--accent-2);
+    }
+
+    .feedback-box {
+      border-left: 6px solid var(--accent);
+    }
+
+    .summary-box {
+      border-left: 6px solid var(--warning);
+    }
+
+    .log-card {
+      padding: 18px;
+      max-height: 405px;
+      overflow: auto;
+    }
+
+    .log-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .log-item {
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(15, 139, 76, 0.06);
+      border: 1px solid rgba(15, 139, 76, 0.08);
+      animation: fadeUp 0.35s ease;
+    }
+
+    .log-item strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .log-item span {
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .badge {
+      display: inline-flex;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      background: rgba(194, 72, 63, 0.1);
+      color: var(--danger);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .footer-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .secondary-btn {
+      background: rgba(23, 50, 31, 0.08);
+      color: var(--text);
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .hero,
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      .container {
+        width: min(100% - 20px, 1200px);
+      }
+
+      .stats-grid,
+      .decisions-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-card,
+      .panel,
+      .stat-card,
+      .decision-card,
+      .feedback-box,
+      .event-box,
+      .advisor-box,
+      .summary-box,
+      .log-card {
+        border-radius: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section class="hero">
+      <div class="hero-card">
+        <h1>Presidente BRF</h1>
+        <p>
+          Conduza a economia brasileira durante 10 anos de mandato. Cada decisão muda o rumo do PIB,
+          da inflação, do emprego e da sua popularidade. Equilibre crescimento, responsabilidade fiscal
+          e pressão política para não cair antes do fim do mandato.
+        </p>
+        <div class="status-row">
+          <div class="status-pill" id="governmentStatus">Mandato em andamento</div>
+          <div class="status-pill" id="yearDisplay">Ano 1 de 10</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Mandato</h2>
+        <div class="turn-display" id="turnNumber">1</div>
+        <div>Turno atual</div>
+        <div class="progress-wrap">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="stats-grid" id="statsGrid">
+      <article class="stat-card">
+        <div class="stat-label">PIB</div>
+        <div class="stat-value" id="gdpValue">R$ 0</div>
+        <div class="stat-trend trend-neutral" id="gdpTrend">Sem variação</div>
+      </article>
+      <article class="stat-card">
+        <div class="stat-label">Taxa de imposto</div>
+        <div class="stat-value" id="taxValue">0%</div>
+        <div class="stat-trend trend-neutral" id="taxTrend">Sem variação</div>
+      </article>
+      <article class="stat-card">
+        <div class="stat-label">Popularidade</div>
+        <div class="stat-value" id="popularityValue">0%</div>
+        <div class="stat-trend trend-neutral" id="popularityTrend">Sem variação</div>
+      </article>
+      <article class="stat-card">
+        <div class="stat-label">Inflação</div>
+        <div class="stat-value" id="inflationValue">0%</div>
+        <div class="stat-trend trend-neutral" id="inflationTrend">Sem variação</div>
+      </article>
+      <article class="stat-card">
+        <div class="stat-label">Dívida pública</div>
+        <div class="stat-value" id="debtValue">R$ 0</div>
+        <div class="stat-trend trend-neutral" id="debtTrend">Sem variação</div>
+      </article>
+      <article class="stat-card">
+        <div class="stat-label">Desemprego</div>
+        <div class="stat-value" id="unemploymentValue">0%</div>
+        <div class="stat-trend trend-neutral" id="unemploymentTrend">Sem variação</div>
+      </article>
+      <article class="stat-card">
+        <div class="stat-label">População</div>
+        <div class="stat-value" id="populationValue">0</div>
+        <div class="stat-trend trend-neutral" id="populationTrend">Sem variação</div>
+      </article>
+      <article class="stat-card">
+        <div class="stat-label">Saldo político</div>
+        <div class="stat-value" id="stabilityValue">0</div>
+        <div class="stat-trend trend-neutral" id="stabilityTrend">Sem variação</div>
+      </article>
+    </section>
+
+    <section class="main-grid">
+      <div class="decisions-panel">
+        <h2 class="section-title">Decisões do Ano</h2>
+        <div class="decisions-grid" id="decisionGrid"></div>
+      </div>
+
+      <aside class="side-panel">
+        <div class="feedback-box" id="feedbackBox">
+          <strong>Painel de governo</strong>
+          <p>Escolha uma medida para encerrar o ano. Cada ação produz efeitos imediatos e abre espaço para um evento aleatório.</p>
+        </div>
+
+        <div class="event-box" id="eventBox">
+          <strong>Eventos nacionais</strong>
+          <p>Nenhum evento relevante neste momento. O cenário internacional ainda observa seus primeiros movimentos.</p>
+        </div>
+
+        <div class="advisor-box" id="advisorBox">
+          <strong>Conselho estratégico</strong>
+          <p id="advisorText">Com inflação controlada e popularidade inicial forte, o melhor caminho costuma ser acelerar crescimento sem perder disciplina fiscal.</p>
+        </div>
+
+        <div class="summary-box hidden" id="summaryBox">
+          <strong>Resultado final</strong>
+          <p id="summaryText"></p>
+          <div class="footer-actions">
+            <button class="primary-btn" id="restartButton">Jogar novamente</button>
+          </div>
+        </div>
+
+        <div class="log-card">
+          <h2 class="section-title">Log de Governo</h2>
+          <div class="log-list" id="logList"></div>
+        </div>
+      </aside>
+    </section>
+  </div>
+
+  <script>
+    const state = {
+      year: 1,
+      maxYears: 10,
+      gameOver: false,
+      stats: {
+        gdp: 2200,
+        taxRate: 27,
+        popularity: 62,
+        inflation: 5.4,
+        debt: 980,
+        unemployment: 9.2,
+        population: 213,
+        stability: 58
+      },
+      previousStats: {},
+      log: []
+    };
+
+    const decisions = [
+      {
+        id: "raise-tax",
+        label: "Aumentar imposto",
+        description: "Reforca a arrecadacao e ajuda o caixa do governo, mas desagrada empresas e parte da classe media.",
+        effect: {
+          taxRate: 2.5,
+          gdp: -70,
+          popularity: -7,
+          inflation: -0.8,
+          debt: -45,
+          unemployment: 0.9,
+          stability: -4
+        }
+      },
+      {
+        id: "lower-tax",
+        label: "Reduzir imposto",
+        description: "Estimula consumo e investimentos privados, porem reduz a arrecadacao e pressiona as contas publicas.",
+        effect: {
+          taxRate: -2.5,
+          gdp: 95,
+          popularity: 5,
+          inflation: 0.9,
+          debt: 55,
+          unemployment: -0.8,
+          stability: 2
+        }
+      },
+      {
+        id: "tech",
+        label: "Investir em tecnologia",
+        description: "Aposta em produtividade, educacao e inovacao. O retorno economico cresce com algum atraso, mas melhora o futuro.",
+        effect: {
+          gdp: 130,
+          popularity: 3,
+          inflation: -0.2,
+          debt: 80,
+          unemployment: -1.1,
+          population: 0.2,
+          stability: 4
+        }
+      },
+      {
+        id: "infra",
+        label: "Investir em infraestrutura",
+        description: "Estradas, energia e logistica melhoram a economia real, mas o gasto publico sobe rapidamente no curto prazo.",
+        effect: {
+          gdp: 145,
+          popularity: 4,
+          inflation: 0.4,
+          debt: 95,
+          unemployment: -1.4,
+          stability: 3
+        }
+      },
+      {
+        id: "imports",
+        label: "Abrir importacoes (modelo BRF)",
+        description: "Barateia insumos, aumenta competitividade e reduz pressao de precos, mas parte da industria local reage mal.",
+        effect: {
+          gdp: 105,
+          popularity: -1,
+          inflation: -1.2,
+          debt: -10,
+          unemployment: 0.4,
+          stability: -2
+        }
+      },
+      {
+        id: "social",
+        label: "Criar programas sociais",
+        description: "Protege a base mais vulneravel, aumenta apoio popular e reduz desigualdade, com impacto fiscal relevante.",
+        effect: {
+          gdp: 55,
+          popularity: 9,
+          inflation: 0.7,
+          debt: 90,
+          unemployment: -0.5,
+          stability: 5
+        }
+      }
+    ];
+
+    const randomEvents = [
+      {
+        title: "Crise economica",
+        description: "Os mercados entram em panico, o credito seca e investidores retiram capital do pais.",
+        effect: {
+          gdp: -180,
+          inflation: 2.6,
+          popularity: -8,
+          debt: 120,
+          unemployment: 2.3,
+          stability: -8
+        }
+      },
+      {
+        title: "Escandalo politico",
+        description: "Aliados sao envolvidos em denuncias e sua base no Congresso cobra explicacoes urgentes.",
+        effect: {
+          popularity: -14,
+          inflation: 0.6,
+          debt: 35,
+          stability: -16
+        }
+      },
+      {
+        title: "Crescimento global",
+        description: "A economia mundial acelera, impulsiona exportacoes e melhora a arrecadacao interna.",
+        effect: {
+          gdp: 160,
+          inflation: -0.4,
+          popularity: 5,
+          debt: -55,
+          unemployment: -1.1,
+          stability: 6
+        }
+      },
+      {
+        title: "Pandemia",
+        description: "Uma emergencia sanitaria atinge cadeias produtivas, empregos e o humor social.",
+        effect: {
+          gdp: -220,
+          inflation: 3.8,
+          popularity: -10,
+          debt: 150,
+          unemployment: 3.1,
+          population: -1.1,
+          stability: -10
+        }
+      },
+      {
+        title: "Safra recorde",
+        description: "O agronegocio puxa o PIB, estabiliza alimentos e melhora a balanca comercial.",
+        effect: {
+          gdp: 110,
+          inflation: -0.9,
+          popularity: 3,
+          debt: -25,
+          unemployment: -0.6,
+          stability: 4
+        }
+      },
+      {
+        title: "Seca severa",
+        description: "A crise hidrica encarece energia, pressiona custos e reduz a atividade em setores-chave.",
+        effect: {
+          gdp: -90,
+          inflation: 1.9,
+          popularity: -4,
+          debt: 45,
+          unemployment: 1.1,
+          stability: -5
+        }
+      }
+    ];
+
+    const elements = {
+      decisionGrid: document.getElementById("decisionGrid"),
+      feedbackBox: document.getElementById("feedbackBox"),
+      eventBox: document.getElementById("eventBox"),
+      advisorText: document.getElementById("advisorText"),
+      summaryBox: document.getElementById("summaryBox"),
+      summaryText: document.getElementById("summaryText"),
+      restartButton: document.getElementById("restartButton"),
+      progressFill: document.getElementById("progressFill"),
+      turnNumber: document.getElementById("turnNumber"),
+      yearDisplay: document.getElementById("yearDisplay"),
+      governmentStatus: document.getElementById("governmentStatus"),
+      logList: document.getElementById("logList"),
+      statsGrid: document.getElementById("statsGrid"),
+      statValues: {
+        gdp: document.getElementById("gdpValue"),
+        taxRate: document.getElementById("taxValue"),
+        popularity: document.getElementById("popularityValue"),
+        inflation: document.getElementById("inflationValue"),
+        debt: document.getElementById("debtValue"),
+        unemployment: document.getElementById("unemploymentValue"),
+        population: document.getElementById("populationValue"),
+        stability: document.getElementById("stabilityValue")
+      },
+      trends: {
+        gdp: document.getElementById("gdpTrend"),
+        taxRate: document.getElementById("taxTrend"),
+        popularity: document.getElementById("popularityTrend"),
+        inflation: document.getElementById("inflationTrend"),
+        debt: document.getElementById("debtTrend"),
+        unemployment: document.getElementById("unemploymentTrend"),
+        population: document.getElementById("populationTrend"),
+        stability: document.getElementById("stabilityTrend")
+      }
+    };
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
+
+    function formatCurrency(value) {
+      return new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+        maximumFractionDigits: 0
+      }).format(value * 1000000000);
+    }
+
+    function formatPercent(value) {
+      return `${value.toFixed(1)}%`;
+    }
+
+    function formatPopulation(value) {
+      return `${value.toFixed(1)} mi`;
+    }
+
+    function copyStats() {
+      state.previousStats = { ...state.stats };
+    }
+
+    function addLog(title, description) {
+      state.log.unshift({ title, description, year: state.year });
+      state.log = state.log.slice(0, 12);
+      renderLog();
+    }
+
+    function renderLog() {
+      elements.logList.innerHTML = "";
+      state.log.forEach((entry) => {
+        const item = document.createElement("div");
+        item.className = "log-item";
+        item.innerHTML = `<strong>Ano ${entry.year}: ${entry.title}</strong><span>${entry.description}</span>`;
+        elements.logList.appendChild(item);
+      });
+    }
+
+    function trendText(delta, suffix = "", inverseGood = false) {
+      if (Math.abs(delta) < 0.05) {
+        return { text: "Estavel", className: "trend-neutral" };
+      }
+      const isPositive = delta > 0;
+      const good = inverseGood ? !isPositive : isPositive;
+      const signal = isPositive ? "+" : "";
+      return {
+        text: `${signal}${delta.toFixed(1)}${suffix} no ano`,
+        className: good ? "trend-up" : "trend-down"
+      };
+    }
+
+    function renderStats() {
+      const { stats, previousStats } = state;
+      elements.statValues.gdp.textContent = formatCurrency(stats.gdp);
+      elements.statValues.taxRate.textContent = formatPercent(stats.taxRate);
+      elements.statValues.popularity.textContent = formatPercent(stats.popularity);
+      elements.statValues.inflation.textContent = formatPercent(stats.inflation);
+      elements.statValues.debt.textContent = formatCurrency(stats.debt);
+      elements.statValues.unemployment.textContent = formatPercent(stats.unemployment);
+      elements.statValues.population.textContent = formatPopulation(stats.population);
+      elements.statValues.stability.textContent = Math.round(stats.stability);
+
+      const trendConfig = {
+        gdp: { suffix: "", inverseGood: false },
+        taxRate: { suffix: " p.p.", inverseGood: false },
+        popularity: { suffix: " p.p.", inverseGood: false },
+        inflation: { suffix: " p.p.", inverseGood: true },
+        debt: { suffix: "", inverseGood: true },
+        unemployment: { suffix: " p.p.", inverseGood: true },
+        population: { suffix: " mi", inverseGood: false },
+        stability: { suffix: "", inverseGood: false }
+      };
+
+      Object.keys(trendConfig).forEach((key, index) => {
+        const delta = stats[key] - (previousStats[key] ?? stats[key]);
+        const trend = trendText(delta, trendConfig[key].suffix, trendConfig[key].inverseGood);
+        const element = elements.trends[key];
+        element.textContent = trend.text;
+        element.className = `stat-trend ${trend.className}`;
+        const card = elements.statsGrid.children[index];
+        card.classList.remove("flash");
+        void card.offsetWidth;
+        card.classList.add("flash");
+      });
+    }
+
+    function renderHeader() {
+      elements.turnNumber.textContent = state.year;
+      elements.yearDisplay.textContent = `Ano ${state.year} de ${state.maxYears}`;
+      elements.progressFill.style.width = `${(state.year / state.maxYears) * 100}%`;
+      elements.governmentStatus.textContent = state.gameOver ? "Mandato encerrado" : "Mandato em andamento";
+    }
+
+    function renderDecisions() {
+      elements.decisionGrid.innerHTML = "";
+      decisions.forEach((decision) => {
+        const card = document.createElement("article");
+        card.className = "decision-card";
+        card.innerHTML = `
+          <h3>${decision.label}</h3>
+          <p>${decision.description}</p>
+          <button ${state.gameOver ? "disabled" : ""} data-action="${decision.id}">Executar medida</button>
+        `;
+        card.querySelector("button").addEventListener("click", () => runTurn(decision));
+        elements.decisionGrid.appendChild(card);
+      });
+    }
+
+    function applyEffect(effect) {
+      Object.entries(effect).forEach(([key, value]) => {
+        state.stats[key] = (state.stats[key] ?? 0) + value;
+      });
+    }
+
+    function applyAnnualDrift() {
+      state.stats.population += 0.7;
+      state.stats.debt += state.stats.inflation * 2.4;
+      state.stats.popularity -= Math.max(0, state.stats.inflation - 6) * 0.35;
+      state.stats.stability -= Math.max(0, state.stats.debt - 1200) * 0.01;
+      state.stats.gdp += (state.stats.popularity - 50) * 1.2;
+      state.stats.unemployment += (state.stats.inflation - 6) * 0.12;
+    }
+
+    function normalizeStats() {
+      state.stats.taxRate = clamp(state.stats.taxRate, 10, 45);
+      state.stats.popularity = clamp(state.stats.popularity, 0, 100);
+      state.stats.inflation = clamp(state.stats.inflation, 0, 30);
+      state.stats.unemployment = clamp(state.stats.unemployment, 1, 35);
+      state.stats.population = clamp(state.stats.population, 180, 230);
+      state.stats.stability = clamp(state.stats.stability, 0, 100);
+      state.stats.gdp = clamp(state.stats.gdp, 800, 5200);
+      state.stats.debt = clamp(state.stats.debt, 250, 4000);
+    }
+
+    function pickRandomEvent() {
+      const shouldTrigger = Math.random() < 0.72;
+      if (!shouldTrigger) {
+        return null;
+      }
+      return randomEvents[Math.floor(Math.random() * randomEvents.length)];
+    }
+
+    function generateAdvice() {
+      const { inflation, debt, popularity, unemployment, gdp } = state.stats;
+      if (inflation > 14) {
+        return "A inflacao esta perigosamente alta. Priorize medidas que segurem precos e evite ampliar gastos sem compensacao.";
+      }
+      if (popularity < 35) {
+        return "O apoio politico esta baixo. Programas sociais ou medidas de alivio imediato podem evitar uma crise de governabilidade.";
+      }
+      if (debt > 1700) {
+        return "A divida virou um alerta. Medidas que melhorem arrecadacao ou controlem pressao inflacionaria ganham peso agora.";
+      }
+      if (unemployment > 12) {
+        return "O desemprego esta machucando a economia real. Infraestrutura e tecnologia ajudam a girar empregos com mais consistencia.";
+      }
+      if (gdp > 3200 && inflation < 8) {
+        return "O ambiente economico esta favoravel. Este e um bom momento para consolidar crescimento com reformas equilibradas.";
+      }
+      return "Seu mandato esta em zona competitiva. Misturar crescimento com controle fiscal continua sendo a estrategia mais segura.";
+    }
+
+    function updatePanels(feedbackTitle, feedbackText, eventTitle, eventText) {
+      elements.feedbackBox.innerHTML = `<strong>${feedbackTitle}</strong><p>${feedbackText}</p>`;
+      elements.eventBox.innerHTML = `<strong>${eventTitle}</strong><p>${eventText}</p>`;
+      elements.advisorText.textContent = generateAdvice();
+    }
+
+    function endGame(title, text) {
+      state.gameOver = true;
+      elements.summaryBox.classList.remove("hidden");
+      elements.summaryText.textContent = `${title} ${text}`;
+      renderHeader();
+      renderDecisions();
+    }
+
+    function evaluateEnding() {
+      const { gdp, popularity, inflation, debt, unemployment, stability } = state.stats;
+      const score =
+        (gdp / 100) +
+        (popularity * 0.8) +
+        ((20 - inflation) * 4) +
+        ((18 - unemployment) * 3) +
+        (stability * 0.4) -
+        (debt / 120);
+
+      let government = "governo conturbado";
+      if (score > 120) {
+        government = "governo historico";
+      } else if (score > 95) {
+        government = "governo forte";
+      } else if (score > 72) {
+        government = "governo razoavel";
+      }
+
+      let economy = "economia fragil";
+      if (gdp > 3100 && inflation < 8 && unemployment < 8) {
+        economy = "economia dinamica";
+      } else if (gdp > 2600 && inflation < 11 && unemployment < 10) {
+        economy = "economia estavel";
+      }
+
+      endGame(
+        "Mandato concluido.",
+        `Apos 10 anos, voce encerrou um ${government}, com ${economy}. Popularidade final de ${state.stats.popularity.toFixed(1)}% e PIB de ${formatCurrency(state.stats.gdp)}.`
+      );
+    }
+
+    function checkGameStatus() {
+      if (state.stats.popularity < 20) {
+        endGame(
+          "Impeachment.",
+          "Sua popularidade caiu abaixo de 20% e o Congresso rompeu apoio politico ao governo."
+        );
+        return true;
+      }
+      if (state.stats.inflation > 20) {
+        endGame(
+          "Crise economica terminal.",
+          "A inflacao ultrapassou 20% e sua administracao perdeu o controle dos precos."
+        );
+        return true;
+      }
+      if (state.year >= state.maxYears) {
+        evaluateEnding();
+        return true;
+      }
+      return false;
+    }
+
+    function runTurn(decision) {
+      if (state.gameOver) {
+        return;
+      }
+
+      copyStats();
+      applyEffect(decision.effect);
+      applyAnnualDrift();
+
+      const event = pickRandomEvent();
+      if (event) {
+        applyEffect(event.effect);
+      }
+
+      normalizeStats();
+
+      const actionMessage = `${decision.label} executada. O governo encerrou o ano com novos impactos sobre atividade economica, humor social e contas publicas.`;
+      const eventMessage = event
+        ? `${event.title}: ${event.description}`
+        : "Sem choque extraordinario neste ano. As tensoes ficaram sob controle e o mercado reagiu sem surpresas graves.";
+
+      addLog(decision.label, event ? `${decision.description} Evento: ${event.title}.` : decision.description);
+      updatePanels("Decisao do ano", actionMessage, event ? event.title : "Ano sem evento critico", eventMessage);
+
+      renderStats();
+
+      if (checkGameStatus()) {
+        return;
+      }
+
+      state.year += 1;
+      renderHeader();
+      renderDecisions();
+    }
+
+    function resetGame() {
+      state.year = 1;
+      state.gameOver = false;
+      state.stats = {
+        gdp: 2200,
+        taxRate: 27,
+        popularity: 62,
+        inflation: 5.4,
+        debt: 980,
+        unemployment: 9.2,
+        population: 213,
+        stability: 58
+      };
+      state.previousStats = {};
+      state.log = [];
+      elements.summaryBox.classList.add("hidden");
+      updatePanels(
+        "Painel de governo",
+        "Escolha uma medida para encerrar o ano. Cada acao produz efeitos imediatos e abre espaco para um evento aleatorio.",
+        "Eventos nacionais",
+        "Nenhum evento relevante neste momento. O cenario internacional ainda observa seus primeiros movimentos."
+      );
+      addLog("Posse presidencial", "O mandato comeca com expectativa moderada, inflacao controlada e pressao por crescimento.");
+      renderHeader();
+      renderStats();
+      renderDecisions();
+    }
+
+    elements.restartButton.addEventListener("click", resetGame);
+
+    addLog("Posse presidencial", "O mandato comeca com expectativa moderada, inflacao controlada e pressao por crescimento.");
+    copyStats();
+    renderHeader();
+    renderStats();
+    renderDecisions();
+  </script>
+</body>
+</html>
