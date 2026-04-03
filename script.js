@@ -306,6 +306,7 @@ const state = {
   approval: {},
   history: { gdp: [], inflation: [], popularity: [] },
   activeDecisions: [],
+  queuedDecisions: [],
   pendingEffects: [],
   news: [],
   events: [],
@@ -427,6 +428,7 @@ function initSimulation() {
     popularity: [state.stats.popularity]
   };
   state.activeDecisions = [];
+  state.queuedDecisions = [];
   state.pendingEffects = [];
   state.news = [];
   state.events = [];
@@ -822,6 +824,19 @@ function applyDecisionEffect(effect, title) {
   updateHeadline(title, effect.impact);
 }
 
+function flushQueuedDecisions() {
+  if (!state.queuedDecisions.length) {
+    return;
+  }
+  const queued = [...state.queuedDecisions];
+  state.queuedDecisions = [];
+  queued.forEach((entry) => {
+    applyDecisionEffect(entry.effect, entry.title);
+  });
+  updateAlertState();
+  renderAll();
+}
+
 function answerDecision(id, option) {
   if (state.gameOver) {
     return;
@@ -830,7 +845,25 @@ function answerDecision(id, option) {
   if (!decision) {
     return;
   }
+  if (!jogoRodando) {
+    const queuedTitle = `${decision.title} - ${decision.options[option].label}`;
+    const severityWhenPaused = decisionSeverity(decision.options[option]);
+    animateDecisionFeedback(decision.id, severityWhenPaused);
+    playTone(option === "approve" ? "good" : "click");
+    setTimeout(() => {
+      state.activeDecisions = state.activeDecisions.filter((item) => item !== decision);
+      state.queuedDecisions.push({
+        effect: decision.options[option],
+        title: queuedTitle
+      });
+      pushEvent("Decisão aguardando execução", `${decision.title} foi definida e entrará em vigor quando o jogo voltar para Play.`, "neutral");
+      pushNews("Gabinete", `${decision.title} foi registrada em espera`, "A medida só será aplicada quando o jogo voltar a rodar.");
+      renderAll();
+    }, severityWhenPaused === "critical" ? 420 : severityWhenPaused === "moderate" ? 320 : 240);
+    return;
+  }
   const severity = decisionSeverity(decision.options[option]);
+  const decisionTitle = `${decision.title} - ${decision.options[option].label}`;
   animateDecisionFeedback(decision.id, severity);
   playTone(option === "approve" ? "good" : "click");
   setTimeout(() => {
@@ -1494,6 +1527,7 @@ function renderAll() {
 
 elements.playButton.addEventListener("click", () => {
   jogoRodando = true;
+  flushQueuedDecisions();
 });
 
 elements.pauseButton.addEventListener("click", () => {
