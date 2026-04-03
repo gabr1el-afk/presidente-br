@@ -16,7 +16,7 @@ const COUNTRIES = {
     flag: "🇧🇷",
     title: "Presidente do Brasil",
     brandType: "image",
-    brandImage: "file:///F:/brf.jpg",
+    brandImage: "./brf.jpg",
     difficultyName: "Mandato Inicial",
     start: { gdp: 2.3, inflation: 6.8, popularity: 57, cash: 170, unemployment: 10.4, taxRate: 28 },
     approval: { economia: 54, saude: 62, seguranca: 44, educacao: 58 },
