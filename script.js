@@ -648,7 +648,7 @@ function sliderRow(key, label, value) {
     <label class="slider-row">
       <span>${label}</span>
       <input type="range" min="0" max="100" value="${Math.round(value)}" data-finance="${key}">
-      <strong>${Math.round(value)}</strong>
+      <strong data-finance-value="${key}">${Math.round(value)}</strong>
     </label>
   `;
 }
@@ -665,19 +665,30 @@ function bindEconomyControls() {
           .filter(([entryKey]) => entryKey.startsWith("gasto") && entryKey !== "eficienciaEstado" && entryKey !== key)
           .reduce((sum, [, value]) => sum + value, 0);
         const budgetCap = Math.max(40, 400 - Math.floor(state.stats.cash * 0.45));
-        if (totalOtherSpending + nextValue > budgetCap) {
-          input.value = state.finance[key];
-          showAlertPopup("deficit", "Déficit", "O orçamento disponível não comporta esse aumento agora.");
-          return;
+          if (totalOtherSpending + nextValue > budgetCap) {
+            input.value = state.finance[key];
+            input.style.setProperty("--range-progress", `${input.value}%`);
+            showAlertPopup("deficit", "Déficit", "O orçamento disponível não comporta esse aumento agora.");
+            return;
+          }
         }
-      }
       state.finance[key] = nextValue;
       if (key === "nivelImposto") {
         state.stats.taxRate = nextValue;
       }
+      const valueLabel = elements.panelContent.querySelector(`[data-finance-value="${key}"]`);
+      if (valueLabel) {
+        valueLabel.textContent = Math.round(nextValue);
+      }
       playTone("click");
-      renderEconomyPanel();
       renderStatsStrip();
+      updateAlertState();
+    });
+
+    input.addEventListener("change", () => {
+      if (state.currentPanel === "economy") {
+        renderEconomyPanel();
+      }
     });
   });
 }
