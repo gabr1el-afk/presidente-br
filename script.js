@@ -866,6 +866,11 @@ function answerDecision(id, option) {
   const decisionTitle = `${decision.title} - ${decision.options[option].label}`;
   animateDecisionFeedback(decision.id, severity);
   playTone(option === "approve" ? "good" : "click");
+  state.activeDecisions = state.activeDecisions.filter((item) => item !== decision);
+  applyDecisionEffect(decision.options[option], decisionTitle);
+  updateAlertState();
+  renderAll();
+  return;
   setTimeout(() => {
     applyDecisionEffect(decision.options[option], `${decision.title} — ${decision.options[option].label}`);
     state.activeDecisions = state.activeDecisions.filter((item) => item !== decision);
