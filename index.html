@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Presidente BRF - Simulador Econômico</title>
+  <title>Presidente BR - Simulação em Tempo Real</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,25 +11,31 @@
     <header class="topbar panel">
       <div class="brand-block">
         <span class="eyebrow">Palácio do Planalto</span>
-        <h1>Presidente BRF</h1>
-        <p>Equilibre crescimento, inflação, caixa e apoio popular durante um mandato de 4 anos.</p>
+        <h1>Presidente BR</h1>
+        <p>Uma simulação política em tempo real com pressão econômica, decisões urgentes e consequências contínuas.</p>
       </div>
 
-      <div class="topbar-side">
-        <div class="difficulty-picker">
-          <label for="difficultySelect">Dificuldade</label>
-          <select id="difficultySelect">
-            <option value="easy">Fácil</option>
-            <option value="normal" selected>Médio</option>
-            <option value="hard">Difícil</option>
-          </select>
+      <div class="control-cluster">
+        <div class="control-card">
+          <span class="control-label">Tempo</span>
+          <strong id="clockLabel">Ano 1 • Tick 0</strong>
+          <span id="statusLabel">Em execução</span>
         </div>
 
-        <div class="turn-box">
-          <span class="turn-label">Ano</span>
-          <strong id="yearLabel">1 / 4</strong>
-          <div class="progress-track">
-            <div class="progress-fill" id="termProgress"></div>
+        <div class="control-card">
+          <span class="control-label">Controle</span>
+          <div class="button-row">
+            <button class="primary-btn" id="playButton">Play</button>
+            <button class="secondary-btn" id="pauseButton">Pause</button>
+          </div>
+        </div>
+
+        <div class="control-card">
+          <span class="control-label">Velocidade</span>
+          <div class="button-row">
+            <button class="speed-btn active" data-speed="1">1x</button>
+            <button class="speed-btn" data-speed="2">2x</button>
+            <button class="speed-btn" data-speed="4">4x</button>
           </div>
         </div>
       </div>
@@ -37,121 +43,139 @@
 
     <main class="layout">
       <section class="main-column">
-        <section class="hud-grid" id="hudGrid">
+        <section class="hud-grid">
           <article class="hud-card" data-stat="gdp">
-            <span class="hud-icon">📈</span>
-            <span class="hud-title">PIB</span>
-            <strong class="hud-value" id="gdpValue">R$ 0</strong>
-            <span class="hud-delta" id="gdpDelta">Estável</span>
+            <div class="hud-head">
+              <span class="hud-title">PIB</span>
+              <span class="hud-value" id="gdpValue">R$ 0</span>
+            </div>
+            <div class="meter"><div class="meter-fill" id="gdpBar"></div></div>
+            <div class="hud-meta">
+              <span id="gdpDelta">Estável</span>
+              <span id="gdpState">Neutro</span>
+            </div>
           </article>
+
           <article class="hud-card" data-stat="inflation">
-            <span class="hud-icon">💸</span>
-            <span class="hud-title">Inflação</span>
-            <strong class="hud-value" id="inflationValue">0%</strong>
-            <span class="hud-delta" id="inflationDelta">Estável</span>
+            <div class="hud-head">
+              <span class="hud-title">Inflação</span>
+              <span class="hud-value" id="inflationValue">0%</span>
+            </div>
+            <div class="meter"><div class="meter-fill" id="inflationBar"></div></div>
+            <div class="hud-meta">
+              <span id="inflationDelta">Estável</span>
+              <span id="inflationState">Neutro</span>
+            </div>
           </article>
+
           <article class="hud-card" data-stat="popularity">
-            <span class="hud-icon">👍</span>
-            <span class="hud-title">Popularidade</span>
-            <strong class="hud-value" id="popularityValue">0%</strong>
-            <span class="hud-delta" id="popularityDelta">Estável</span>
+            <div class="hud-head">
+              <span class="hud-title">Popularidade</span>
+              <span class="hud-value" id="popularityValue">0%</span>
+            </div>
+            <div class="meter"><div class="meter-fill" id="popularityBar"></div></div>
+            <div class="hud-meta">
+              <span id="popularityDelta">Estável</span>
+              <span id="popularityState">Neutro</span>
+            </div>
           </article>
+
           <article class="hud-card" data-stat="cash">
-            <span class="hud-icon">💰</span>
-            <span class="hud-title">Caixa do governo</span>
-            <strong class="hud-value" id="cashValue">R$ 0</strong>
-            <span class="hud-delta" id="cashDelta">Estável</span>
+            <div class="hud-head">
+              <span class="hud-title">Caixa</span>
+              <span class="hud-value" id="cashValue">R$ 0</span>
+            </div>
+            <div class="meter"><div class="meter-fill" id="cashBar"></div></div>
+            <div class="hud-meta">
+              <span id="cashDelta">Estável</span>
+              <span id="cashState">Neutro</span>
+            </div>
           </article>
+
           <article class="hud-card" data-stat="unemployment">
-            <span class="hud-icon">👷</span>
-            <span class="hud-title">Desemprego</span>
-            <strong class="hud-value" id="unemploymentValue">0%</strong>
-            <span class="hud-delta" id="unemploymentDelta">Estável</span>
+            <div class="hud-head">
+              <span class="hud-title">Desemprego</span>
+              <span class="hud-value" id="unemploymentValue">0%</span>
+            </div>
+            <div class="meter"><div class="meter-fill" id="unemploymentBar"></div></div>
+            <div class="hud-meta">
+              <span id="unemploymentDelta">Estável</span>
+              <span id="unemploymentState">Neutro</span>
+            </div>
           </article>
         </section>
 
         <section class="hero-grid">
-          <article class="panel mission-panel">
-            <div class="mission-copy">
-              <span class="eyebrow">Objetivo do mandato</span>
-              <h2>Sobreviva politicamente e entregue resultado econômico</h2>
-              <p id="missionText">Você vence ao terminar 4 anos com popularidade acima de 50%, inflação controlada e PIB em crescimento.</p>
+          <article class="panel summary-panel">
+            <span class="eyebrow">Sala de situação</span>
+            <h2>Pressão constante no mandato</h2>
+            <p id="missionText">O governo roda em tempo real. Decisões surgem automaticamente, o país reage sem parar e o relógio só para quando você pausar.</p>
+            <div class="summary-tags">
+              <span class="tag">1 segundo = 20 ticks</span>
+              <span class="tag">1 ano = 48.000 ticks</span>
+              <span class="tag" id="difficultyTag">Dificuldade média</span>
             </div>
-            <button class="primary-btn" id="advanceYearButton">Avançar Ano</button>
           </article>
 
           <article class="panel advisor-panel">
-            <span class="eyebrow">IA Conselheira</span>
-            <h2 id="advisorTitle">Ministra Helena</h2>
-            <p id="advisorText">O país começou estável. Crescer sem perder arrecadação costuma ser o melhor primeiro passo.</p>
-            <div class="advisor-meta" id="advisorMeta">Confiabilidade política: moderada</div>
+            <span class="eyebrow">Ministro virtual</span>
+            <h2 id="advisorTitle">Helena Duarte</h2>
+            <p id="advisorText">Com o jogo em andamento, acompanhe inflação e caixa. Eles são os gatilhos mais perigosos para uma crise em cascata.</p>
+            <div class="advisor-meta" id="advisorMeta">Conselho em tempo real</div>
           </article>
         </section>
 
         <section class="panel decision-panel">
-          <div class="section-heading">
+          <div class="panel-header">
             <div>
-              <span class="eyebrow">Decisões do ano</span>
-              <h2>Escolha suas respostas antes de encerrar o turno</h2>
+              <span class="eyebrow">Decisões urgentes</span>
+              <h2>Escolhas com prazo</h2>
             </div>
-            <span class="status-chip" id="decisionStatus">0 de 0 respondidas</span>
+            <span class="chip" id="decisionCounter">0 ativas</span>
           </div>
           <div class="decision-list" id="decisionList"></div>
         </section>
 
-        <section class="panel news-panel">
-          <div class="section-heading">
-            <div>
-              <span class="eyebrow">Notícias</span>
-              <h2>Feed nacional</h2>
-            </div>
-            <span class="status-chip status-chip-warn" id="latestHeadline">Sem crise no momento</span>
-          </div>
-          <div class="news-feed" id="newsFeed"></div>
-        </section>
-
         <section class="charts-grid">
           <article class="panel chart-panel">
-            <div class="section-heading">
-              <div>
-                <span class="eyebrow">Histórico</span>
-                <h2>PIB</h2>
-              </div>
-            </div>
+            <span class="eyebrow">Histórico</span>
+            <h2>PIB</h2>
             <canvas id="gdpChart" width="420" height="220"></canvas>
           </article>
           <article class="panel chart-panel">
-            <div class="section-heading">
-              <div>
-                <span class="eyebrow">Histórico</span>
-                <h2>Inflação</h2>
-              </div>
-            </div>
+            <span class="eyebrow">Histórico</span>
+            <h2>Inflação</h2>
             <canvas id="inflationChart" width="420" height="220"></canvas>
           </article>
           <article class="panel chart-panel">
-            <div class="section-heading">
-              <div>
-                <span class="eyebrow">Histórico</span>
-                <h2>Popularidade</h2>
-              </div>
-            </div>
+            <span class="eyebrow">Histórico</span>
+            <h2>Popularidade</h2>
             <canvas id="popularityChart" width="420" height="220"></canvas>
           </article>
         </section>
       </section>
 
       <aside class="side-column">
-        <section class="panel impact-panel">
-          <span class="eyebrow">Painel do turno</span>
-          <h2>Consequências acumuladas</h2>
-          <div class="impact-summary" id="impactSummary">Nenhuma decisão tomada neste ano.</div>
-          <ul class="impact-list" id="impactList"></ul>
+        <section class="panel feedback-panel">
+          <span class="eyebrow">Feedback imediato</span>
+          <h2>Últimos impactos</h2>
+          <div class="impact-feed" id="impactFeed"></div>
         </section>
 
-        <section class="panel">
-          <span class="eyebrow">Arquivo de governo</span>
-          <h2>Log de ações</h2>
+        <section class="panel news-panel">
+          <div class="panel-header">
+            <div>
+              <span class="eyebrow">Noticiário</span>
+              <h2>Feed em tempo real</h2>
+            </div>
+            <span class="chip chip-warn" id="headlineChip">Mercado observando</span>
+          </div>
+          <div class="news-feed" id="newsFeed"></div>
+        </section>
+
+        <section class="panel log-panel">
+          <span class="eyebrow">Registro de governo</span>
+          <h2>Linha do tempo</h2>
           <div class="timeline" id="timeline"></div>
         </section>
       </aside>
@@ -165,17 +189,10 @@
       <p id="endgameText"></p>
       <div class="result-grid" id="resultGrid"></div>
       <div class="modal-actions">
-        <button class="primary-btn" id="restartButton">Jogar novamente</button>
+        <button class="primary-btn" id="restartButton">Reiniciar simulação</button>
       </div>
     </div>
   </div>
-
-  <audio id="goodSound" preload="auto">
-    <source src="data:audio/wav;base64,UklGRlQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YTAAAAAAgICAf39/gICAgH9/f4CAgIB/f3+AgICAf39/gICAgH9/f4CAgIB/f3+AgICAf39/gA==" type="audio/wav">
-  </audio>
-  <audio id="badSound" preload="auto">
-    <source src="data:audio/wav;base64,UklGRlQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YTAAAAAAgH9/f4CAgIB/f3+AgICAf39/gICAgH9/f4CAgIB/f3+AgICAf39/gICAgH9/f4CAgIB/f3+A" type="audio/wav">
-  </audio>
 
   <script src="script.js"></script>
 </body>
