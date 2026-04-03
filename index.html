@@ -3,193 +3,134 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Presidente BR - Simulação em Tempo Real</title>
+  <title>Presidente BR</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="app-shell">
-    <header class="topbar panel">
-      <div class="brand-block">
-        <span class="eyebrow">Palácio do Planalto</span>
-        <h1>Presidente BR</h1>
-        <p>Uma simulação política em tempo real com pressão econômica, decisões urgentes e consequências contínuas.</p>
+    <header class="topbar">
+      <div class="title-block glass">
+        <div class="title-row">
+          <h1>Presidente do Brasil <span class="flag">🇧🇷</span></h1>
+          <span class="difficulty-pill" id="difficultyPill">Mandato Inicial</span>
+        </div>
+        <div class="date-row">
+          <span id="timeLabel">Ano 1 — 01/01/2026</span>
+        </div>
       </div>
 
-      <div class="control-cluster">
-        <div class="control-card">
-          <span class="control-label">Tempo</span>
-          <strong id="clockLabel">Ano 1 • Tick 0</strong>
-          <span id="statusLabel">Em execução</span>
-        </div>
-
-        <div class="control-card">
-          <span class="control-label">Controle</span>
-          <div class="button-row">
-            <button class="primary-btn" id="playButton">Play</button>
-            <button class="secondary-btn" id="pauseButton">Pause</button>
-          </div>
-        </div>
-
-        <div class="control-card">
-          <span class="control-label">Velocidade</span>
-          <div class="button-row">
-            <button class="speed-btn active" data-speed="1">1x</button>
-            <button class="speed-btn" data-speed="2">2x</button>
-            <button class="speed-btn" data-speed="4">4x</button>
-          </div>
-        </div>
+      <div class="transport glass">
+        <button class="transport-btn" id="playButton" aria-label="Play">▶️</button>
+        <button class="transport-btn" id="pauseButton" aria-label="Pause">⏸️</button>
+        <button class="transport-btn speed-btn active" id="speed1Button" data-speed="1" aria-label="1x">▶️</button>
+        <button class="transport-btn speed-btn" id="speed2Button" data-speed="2" aria-label="2x">⏩</button>
+        <button class="transport-btn speed-btn" id="speed4Button" data-speed="4" aria-label="4x">⏩⏩</button>
       </div>
     </header>
 
-    <main class="layout">
-      <section class="main-column">
-        <section class="hud-grid">
-          <article class="hud-card" data-stat="gdp">
-            <div class="hud-head">
-              <span class="hud-title">PIB</span>
-              <span class="hud-value" id="gdpValue">R$ 0</span>
-            </div>
-            <div class="meter"><div class="meter-fill" id="gdpBar"></div></div>
-            <div class="hud-meta">
-              <span id="gdpDelta">Estável</span>
-              <span id="gdpState">Neutro</span>
-            </div>
-          </article>
+    <section class="stats-strip">
+      <article class="stat-card glass" data-stat="gdp">
+        <span class="stat-label">PIB</span>
+        <strong class="stat-value" id="gdpValue">2.3T</strong>
+        <div class="bar-track"><div class="bar-fill" id="gdpBar"></div></div>
+        <span class="stat-detail" id="gdpDetail">Estável</span>
+      </article>
 
-          <article class="hud-card" data-stat="inflation">
-            <div class="hud-head">
-              <span class="hud-title">Inflação</span>
-              <span class="hud-value" id="inflationValue">0%</span>
-            </div>
-            <div class="meter"><div class="meter-fill" id="inflationBar"></div></div>
-            <div class="hud-meta">
-              <span id="inflationDelta">Estável</span>
-              <span id="inflationState">Neutro</span>
-            </div>
-          </article>
+      <article class="stat-card glass" data-stat="inflation">
+        <span class="stat-label">Inflação</span>
+        <strong class="stat-value" id="inflationValue">10.4%</strong>
+        <div class="bar-track"><div class="bar-fill" id="inflationBar"></div></div>
+        <span class="stat-detail" id="inflationDetail">Controlada</span>
+      </article>
 
-          <article class="hud-card" data-stat="popularity">
-            <div class="hud-head">
-              <span class="hud-title">Popularidade</span>
-              <span class="hud-value" id="popularityValue">0%</span>
-            </div>
-            <div class="meter"><div class="meter-fill" id="popularityBar"></div></div>
-            <div class="hud-meta">
-              <span id="popularityDelta">Estável</span>
-              <span id="popularityState">Neutro</span>
-            </div>
-          </article>
+      <article class="stat-card glass" data-stat="popularity">
+        <span class="stat-label">Popularidade</span>
+        <strong class="stat-value" id="popularityValue">57%</strong>
+        <div class="bar-track"><div class="bar-fill" id="popularityBar"></div></div>
+        <span class="stat-detail" id="popularityDetail">Apoio firme</span>
+      </article>
 
-          <article class="hud-card" data-stat="cash">
-            <div class="hud-head">
-              <span class="hud-title">Caixa</span>
-              <span class="hud-value" id="cashValue">R$ 0</span>
-            </div>
-            <div class="meter"><div class="meter-fill" id="cashBar"></div></div>
-            <div class="hud-meta">
-              <span id="cashDelta">Estável</span>
-              <span id="cashState">Neutro</span>
-            </div>
-          </article>
+      <article class="stat-card glass" data-stat="cash">
+        <span class="stat-label">Caixa</span>
+        <strong class="stat-value" id="cashValue">170B</strong>
+        <div class="bar-track"><div class="bar-fill" id="cashBar"></div></div>
+        <span class="stat-detail" id="cashDetail">Equilibrado</span>
+      </article>
 
-          <article class="hud-card" data-stat="unemployment">
-            <div class="hud-head">
-              <span class="hud-title">Desemprego</span>
-              <span class="hud-value" id="unemploymentValue">0%</span>
-            </div>
-            <div class="meter"><div class="meter-fill" id="unemploymentBar"></div></div>
-            <div class="hud-meta">
-              <span id="unemploymentDelta">Estável</span>
-              <span id="unemploymentState">Neutro</span>
-            </div>
-          </article>
-        </section>
+      <article class="stat-card glass" data-stat="unemployment">
+        <span class="stat-label">Desemprego</span>
+        <strong class="stat-value" id="unemploymentValue">10.4%</strong>
+        <div class="bar-track"><div class="bar-fill" id="unemploymentBar"></div></div>
+        <span class="stat-detail" id="unemploymentDetail">Pressão moderada</span>
+      </article>
+    </section>
 
-        <section class="hero-grid">
-          <article class="panel summary-panel">
-            <span class="eyebrow">Sala de situação</span>
-            <h2>Pressão constante no mandato</h2>
-            <p id="missionText">O governo roda em tempo real. Decisões surgem automaticamente, o país reage sem parar e o relógio só para quando você pausar.</p>
-            <div class="summary-tags">
-              <span class="tag">1 segundo = 20 ticks</span>
-              <span class="tag">1 ano = 48.000 ticks</span>
-              <span class="tag" id="difficultyTag">Dificuldade média</span>
-            </div>
-          </article>
+    <main class="main-stage">
+      <section class="hero-board glass" id="heroBoard">
+        <div class="hero-left">
+          <span class="hero-tag" id="headlineBadge">Radar Nacional</span>
+          <h2 id="headlineTitle">O gabinete acompanha sinais mistos da economia</h2>
+          <p id="headlineText">A inflação ainda está sob controle, mas o caixa exige atenção para evitar uma crise em cadeia.</p>
+        </div>
 
-          <article class="panel advisor-panel">
-            <span class="eyebrow">Ministro virtual</span>
-            <h2 id="advisorTitle">Helena Duarte</h2>
-            <p id="advisorText">Com o jogo em andamento, acompanhe inflação e caixa. Eles são os gatilhos mais perigosos para uma crise em cascata.</p>
-            <div class="advisor-meta" id="advisorMeta">Conselho em tempo real</div>
-          </article>
-        </section>
-
-        <section class="panel decision-panel">
-          <div class="panel-header">
-            <div>
-              <span class="eyebrow">Decisões urgentes</span>
-              <h2>Escolhas com prazo</h2>
+        <div class="hero-right">
+          <div class="approval-card glass-inner">
+            <div class="approval-head">
+              <div>
+                <span class="mini-label">Aprovação Nacional</span>
+                <strong id="approvalValue">57%</strong>
+              </div>
+              <button class="mini-action" id="approvalButton">Abrir</button>
             </div>
-            <span class="chip" id="decisionCounter">0 ativas</span>
+            <div class="approval-emojis" id="approvalEmojis">
+              <button class="emoji-btn" data-mood="rage">😡</button>
+              <button class="emoji-btn" data-mood="bad">😕</button>
+              <button class="emoji-btn active" data-mood="neutral">😐</button>
+              <button class="emoji-btn" data-mood="good">🙂</button>
+              <button class="emoji-btn" data-mood="great">😄</button>
+            </div>
           </div>
-          <div class="decision-list" id="decisionList"></div>
-        </section>
 
-        <section class="charts-grid">
-          <article class="panel chart-panel">
-            <span class="eyebrow">Histórico</span>
-            <h2>PIB</h2>
-            <canvas id="gdpChart" width="420" height="220"></canvas>
-          </article>
-          <article class="panel chart-panel">
-            <span class="eyebrow">Histórico</span>
-            <h2>Inflação</h2>
-            <canvas id="inflationChart" width="420" height="220"></canvas>
-          </article>
-          <article class="panel chart-panel">
-            <span class="eyebrow">Histórico</span>
-            <h2>Popularidade</h2>
-            <canvas id="popularityChart" width="420" height="220"></canvas>
-          </article>
-        </section>
+          <div class="hero-alert glass-inner" id="alertBox">
+            <span class="mini-label">Status</span>
+            <strong id="alertTitle">Sem alertas críticos</strong>
+            <p id="alertText">O governo segue com margem de manobra.</p>
+          </div>
+        </div>
       </section>
 
-      <aside class="side-column">
-        <section class="panel feedback-panel">
-          <span class="eyebrow">Feedback imediato</span>
-          <h2>Últimos impactos</h2>
-          <div class="impact-feed" id="impactFeed"></div>
-        </section>
-
-        <section class="panel news-panel">
-          <div class="panel-header">
-            <div>
-              <span class="eyebrow">Noticiário</span>
-              <h2>Feed em tempo real</h2>
-            </div>
-            <span class="chip chip-warn" id="headlineChip">Mercado observando</span>
+      <section class="panel-tray glass" id="panelTray">
+        <div class="panel-tray-header">
+          <div>
+            <span class="mini-label" id="panelEyebrow">Painel</span>
+            <h3 id="panelTitle">Economia</h3>
           </div>
-          <div class="news-feed" id="newsFeed"></div>
-        </section>
-
-        <section class="panel log-panel">
-          <span class="eyebrow">Registro de governo</span>
-          <h2>Linha do tempo</h2>
-          <div class="timeline" id="timeline"></div>
-        </section>
-      </aside>
+          <span class="panel-chip" id="panelChip">Em observação</span>
+        </div>
+        <div class="panel-tray-content" id="panelContent"></div>
+      </section>
     </main>
   </div>
 
+  <nav class="dock glass">
+    <button class="dock-item active" data-panel="economy"><span>💰</span><small>Economia</small></button>
+    <button class="dock-item" data-panel="indicators"><span>📊</span><small>Indicadores</small></button>
+    <button class="dock-item" data-panel="news"><span>📰</span><small>Notícias</small></button>
+    <button class="dock-item" data-panel="decisions"><span>⚖️</span><small>Decisões</small></button>
+    <button class="dock-item" data-panel="advisor"><span>🧠</span><small>Conselheiro</small></button>
+    <button class="dock-item" data-panel="world"><span>🌍</span><small>Relações</small></button>
+    <button class="dock-item" data-panel="stats"><span>📈</span><small>Estatísticas</small></button>
+    <button class="dock-item" data-panel="settings"><span>⚙️</span><small>Ajustes</small></button>
+  </nav>
+
   <div class="overlay hidden" id="endgameOverlay">
-    <div class="modal panel">
-      <span class="eyebrow" id="endgameBadge">Fim de jogo</span>
-      <h2 id="endgameTitle">Resumo do mandato</h2>
+    <div class="modal glass">
+      <span class="mini-label" id="endgameBadge">Fim de mandato</span>
+      <h2 id="endgameTitle">Resumo</h2>
       <p id="endgameText"></p>
       <div class="result-grid" id="resultGrid"></div>
-      <div class="modal-actions">
-        <button class="primary-btn" id="restartButton">Reiniciar simulação</button>
+      <div class="modal-actions" id="endgameActions">
+        <button class="primary-btn" id="restartButton">Reiniciar</button>
       </div>
     </div>
   </div>

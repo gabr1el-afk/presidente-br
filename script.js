@@ -1,262 +1,255 @@
 const TICKS_PER_SECOND = 20;
 const TICKS_PER_MINUTE = 1200;
 const TICKS_PER_YEAR = 48000;
+const START_DATE = new Date("2026-01-01T00:00:00");
 
 let tickAtual = 0;
 let jogoRodando = true;
 let velocidadeJogo = 1;
 let loopId = null;
 
-const GAME_OVER_REASONS = {
-  impeachment: {
-    badge: "Impeachment",
-    title: "O Congresso rompeu com seu governo",
-    text: "A popularidade caiu abaixo de 20% e sua base política desmoronou no meio do mandato."
+const COUNTRIES = {
+  brazil: {
+    id: "brazil",
+    name: "Brasil",
+    flag: "🇧🇷",
+    title: "Presidente do Brasil",
+    difficultyName: "Mandato Inicial",
+    start: { gdp: 2.3, inflation: 6.8, popularity: 57, cash: 170, unemployment: 10.4, taxRate: 28 },
+    approval: { economia: 54, saude: 62, seguranca: 44, educacao: 58 },
+    relations: [
+      { name: "Estados Unidos", flag: "🇺🇸", status: "Acordos em negociação" },
+      { name: "China", flag: "🇨🇳", status: "Comércio aquecido" },
+      { name: "Mercosul", flag: "🌎", status: "Integração sensível" }
+    ]
   },
-  collapse: {
-    badge: "Colapso econômico",
-    title: "A inflação saiu do controle",
-    text: "A inflação passou de 30% e o país entrou em uma espiral de crise econômica."
+  argentina: {
+    id: "argentina",
+    name: "Argentina",
+    flag: "🇦🇷",
+    title: "Presidente da Argentina",
+    difficultyName: "Crise Cambial",
+    start: { gdp: 0.74, inflation: 23.5, popularity: 48, cash: 42, unemployment: 12.6, taxRate: 32 },
+    approval: { economia: 28, saude: 52, seguranca: 39, educacao: 49 },
+    relations: [
+      { name: "Brasil", flag: "🇧🇷", status: "Dependência comercial" },
+      { name: "FMI", flag: "🏦", status: "Pressão por ajuste" },
+      { name: "Mercosul", flag: "🌎", status: "Expectativa elevada" }
+    ]
   },
-  bankruptcy: {
-    badge: "Falência fiscal",
-    title: "O caixa ficou negativo por tempo demais",
-    text: "O Tesouro não conseguiu reagir ao rombo prolongado e a administração perdeu sustentação."
+  venezuela: {
+    id: "venezuela",
+    name: "Venezuela",
+    flag: "🇻🇪",
+    title: "Presidente da Venezuela",
+    difficultyName: "Colapso Estrutural",
+    start: { gdp: 0.39, inflation: 28.4, popularity: 41, cash: 18, unemployment: 16.4, taxRate: 34 },
+    approval: { economia: 18, saude: 34, seguranca: 29, educacao: 31 },
+    relations: [
+      { name: "Colômbia", flag: "🇨🇴", status: "Tensão na fronteira" },
+      { name: "OPEP", flag: "🛢️", status: "Receita estratégica" },
+      { name: "Nações vizinhas", flag: "🌎", status: "Crise migratória" }
+    ]
   },
-  victory: {
-    badge: "Vitória",
-    title: "Você concluiu o mandato com sucesso",
-    text: "O governo chegou ao fim do mandato com popularidade sólida, inflação controlada e economia maior do que no início."
-  },
-  finish: {
-    badge: "Mandato encerrado",
-    title: "Você chegou ao fim do mandato",
-    text: "O governo sobreviveu ao relógio, mas não cumpriu todos os critérios de vitória plena."
-  }
-};
-
-const DIFFICULTIES = {
-  medium: {
-    label: "Dificuldade média",
-    start: { gdp: 2350, inflation: 6.8, popularity: 57, cash: 170, unemployment: 10.5, taxRate: 28 },
-    drift: 1,
-    eventRate: 1,
-    decisionRate: 1
+  southafrica: {
+    id: "southafrica",
+    name: "África do Sul",
+    flag: "🇿🇦",
+    title: "Presidente da África do Sul",
+    difficultyName: "Desemprego Crítico",
+    start: { gdp: 0.86, inflation: 11.8, popularity: 46, cash: 74, unemployment: 24.2, taxRate: 27 },
+    approval: { economia: 31, saude: 57, seguranca: 35, educacao: 46 },
+    relations: [
+      { name: "União Africana", flag: "🌍", status: "Liderança regional" },
+      { name: "China", flag: "🇨🇳", status: "Investimentos pesados" },
+      { name: "BRICS", flag: "🤝", status: "Coordenação estratégica" }
+    ]
   }
 };
 
 const DECISION_LIBRARY = [
   {
-    id: "tax-corporate",
-    title: "Reduzir impostos para empresas?",
-    body: "O setor produtivo promete investir mais se receber um alívio tributário imediato.",
-    tags: ["PIB", "Caixa", "Emprego"],
-    duration: 5200,
+    id: "tax-cut",
+    title: "Reduzir imposto para empresas?",
+    body: "O setor industrial promete novos investimentos se o governo aliviar a carga tributária.",
+    duration: 5800,
+    tags: ["Economia", "Emprego"],
     options: {
       approve: {
         label: "Aprovar",
-        immediate: { gdp: 65, cash: -70, unemployment: -0.7, popularity: 2, inflation: 0.2 },
-        overTime: { gdp: 0.01, cash: -0.007, popularity: -0.001 },
-        impact: "Empresas anunciam expansão, mas a arrecadação sente o golpe."
+        immediate: { gdp: 0.08, cash: -28, popularity: 2, unemployment: -0.5, inflation: 0.2 },
+        overTime: { gdp: 0.00009, cash: -0.01, popularity: -0.00003 },
+        approval: { economia: 4, educacao: -1 },
+        mood: "good",
+        impact: "O setor produtivo reage bem, mas a arrecadação perde fôlego."
       },
       reject: {
         label: "Recusar",
-        immediate: { cash: 45, popularity: -2, gdp: -18, unemployment: 0.2 },
-        overTime: { cash: 0.004, inflation: -0.001 },
-        impact: "O mercado critica o governo, mas o caixa respira melhor."
+        immediate: { cash: 18, popularity: -2, gdp: -0.03, unemployment: 0.2 },
+        overTime: { cash: 0.005, inflation: -0.00008 },
+        approval: { economia: -3, saude: 1 },
+        mood: "neutral",
+        impact: "O caixa melhora, mas o mercado vê o governo como defensivo."
       }
     },
     timeoutPenalty: {
-      immediate: { popularity: -4, gdp: -10, cash: -20 },
-      overTime: { popularity: -0.0015 },
-      impact: "A indefinição irritou empresários e a equipe econômica."
+      immediate: { popularity: -4, cash: -12, gdp: -0.02 },
+      overTime: { popularity: -0.00008 },
+      approval: { economia: -4 },
+      mood: "bad",
+      impact: "A indecisão contaminou a confiança do mercado e do Congresso."
     }
   },
   {
-    id: "social-programs",
+    id: "social-pack",
     title: "Expandir programas sociais?",
-    body: "Movimentos regionais pressionam por reforço de renda para conter desgaste nas periferias.",
-    tags: ["Popularidade", "Caixa", "Inflação"],
-    duration: 5600,
+    body: "Governadores e movimentos sociais cobram reforço de renda em regiões vulneráveis.",
+    duration: 6200,
+    tags: ["Popularidade", "Social"],
     options: {
       approve: {
         label: "Expandir",
-        immediate: { popularity: 6, cash: -75, gdp: 30, unemployment: -0.3, inflation: 0.4 },
-        overTime: { popularity: 0.005, cash: -0.005, inflation: 0.0012 },
-        impact: "A base social reage bem, mas a pressão fiscal aumenta."
+        immediate: { popularity: 5, cash: -24, gdp: 0.03, inflation: 0.3, unemployment: -0.2 },
+        overTime: { popularity: 0.00008, cash: -0.006, inflation: 0.00005 },
+        approval: { saude: 4, educacao: 3, economia: -1 },
+        mood: "good",
+        impact: "O governo ganha calor popular, com custo fiscal visível."
       },
       reject: {
-        label: "Cortar",
-        immediate: { cash: 38, popularity: -6, inflation: -0.1 },
-        overTime: { popularity: -0.0035, unemployment: 0.0015 },
-        impact: "O caixa melhora, porém a pressão popular sobe."
+        label: "Segurar",
+        immediate: { cash: 16, popularity: -5, inflation: -0.1 },
+        overTime: { popularity: -0.00007, unemployment: 0.00004 },
+        approval: { saude: -4, educacao: -3 },
+        mood: "bad",
+        impact: "A pressão nas ruas sobe e a imagem social do governo enfraquece."
       }
     },
     timeoutPenalty: {
-      immediate: { popularity: -5, cash: -10 },
-      overTime: { popularity: -0.0018 },
-      impact: "A hesitação passou imagem de fraqueza e desorganização."
+      immediate: { popularity: -4, cash: -6 },
+      overTime: { popularity: -0.00006 },
+      approval: { saude: -2, educacao: -2 },
+      mood: "bad",
+      impact: "A omissão passou a sensação de governo perdido."
     }
   },
   {
     id: "imports",
-    title: "Abrir importações de alimentos e insumos?",
-    body: "A medida pode aliviar preços rapidamente, mas alguns setores industriais prometem protestar.",
-    tags: ["Inflação", "PIB", "Indústria"],
-    duration: 4800,
+    title: "Abrir importações para aliviar preços?",
+    body: "A equipe econômica quer reduzir o custo de alimentos e insumos rapidamente.",
+    duration: 5000,
+    tags: ["Inflação", "Comércio"],
     options: {
       approve: {
         label: "Abrir",
-        immediate: { inflation: -1.1, gdp: 28, popularity: 1, unemployment: 0.2 },
-        overTime: { inflation: -0.0025, gdp: 0.0035, popularity: -0.0015 },
-        impact: "Os preços aliviam, mas parte da indústria reclama da concorrência."
+        immediate: { inflation: -1.1, gdp: 0.04, popularity: 1, unemployment: 0.2 },
+        overTime: { inflation: -0.00011, gdp: 0.00003, popularity: -0.00003 },
+        approval: { economia: 3, seguranca: 1 },
+        mood: "good",
+        impact: "Os preços aliviam, mas setores protegidos reagem mal."
       },
       reject: {
         label: "Proteger",
-        immediate: { popularity: 1.5, inflation: 0.6, cash: 12 },
-        overTime: { inflation: 0.0018, gdp: -0.002 },
-        impact: "O discurso protecionista agrada aliados, mas mantém a pressão inflacionária."
+        immediate: { popularity: 1, inflation: 0.5, cash: 8 },
+        overTime: { inflation: 0.00009, gdp: -0.00003 },
+        approval: { economia: -2 },
+        mood: "neutral",
+        impact: "A indústria respira, porém a inflação continua pressionando."
       }
     },
     timeoutPenalty: {
-      immediate: { inflation: 0.7, popularity: -3 },
-      overTime: { inflation: 0.0012 },
-      impact: "A demora travou o abastecimento e a inflação ganhou força."
+      immediate: { inflation: 0.6, popularity: -3 },
+      overTime: { inflation: 0.00005 },
+      approval: { economia: -3 },
+      mood: "bad",
+      impact: "A demora deixou o mercado sem direção e os preços subiram."
     }
   },
   {
-    id: "infrastructure",
-    title: "Lançar um pacote de infraestrutura?",
-    body: "Governadores pedem obras para destravar logística e reduzir desemprego.",
-    tags: ["PIB", "Emprego", "Caixa"],
-    duration: 6400,
+    id: "security-plan",
+    title: "Lançar um pacote de segurança urbana?",
+    body: "Governadores pedem resposta rápida diante da alta sensação de insegurança.",
+    duration: 5400,
+    tags: ["Segurança", "Popularidade"],
     options: {
       approve: {
-        label: "Investir",
-        immediate: { gdp: 50, cash: -90, unemployment: -0.9, popularity: 3, inflation: 0.2 },
-        overTime: { gdp: 0.012, unemployment: -0.0025, cash: -0.004 },
-        impact: "Obras aceleram a atividade, mas exigem um caixa mais robusto."
+        label: "Lançar",
+        immediate: { popularity: 3, cash: -18, gdp: 0.01 },
+        overTime: { popularity: 0.00005, cash: -0.004 },
+        approval: { seguranca: 8, economia: -1 },
+        mood: "good",
+        impact: "A agenda de segurança melhora a percepção pública rapidamente."
       },
       reject: {
         label: "Adiar",
-        immediate: { cash: 42, popularity: -2.5, gdp: -20 },
-        overTime: { unemployment: 0.0018, gdp: -0.0028 },
-        impact: "A responsabilidade fiscal melhora, porém a economia perde tração."
+        immediate: { cash: 10, popularity: -3 },
+        overTime: { popularity: -0.00006 },
+        approval: { seguranca: -7 },
+        mood: "bad",
+        impact: "A oposição explora a hesitação e domina o debate."
       }
     },
     timeoutPenalty: {
-      immediate: { popularity: -3, unemployment: 0.3 },
-      overTime: { unemployment: 0.0012 },
-      impact: "A indecisão travou investimentos e gerou desgaste com governadores."
-    }
-  },
-  {
-    id: "fuel-support",
-    title: "Subsidiar combustíveis temporariamente?",
-    body: "Transportadores ameaçam parar e o preço da energia voltou a subir.",
-    tags: ["Inflação", "Caixa", "Popularidade"],
-    duration: 4200,
-    options: {
-      approve: {
-        label: "Subsidiar",
-        immediate: { inflation: -1.4, popularity: 4, cash: -80, gdp: 16 },
-        overTime: { inflation: 0.0015, cash: -0.006 },
-        impact: "Você ganha fôlego político, mas o custo fiscal é pesado."
-      },
-      reject: {
-        label: "Segurar caixa",
-        immediate: { cash: 24, popularity: -4, inflation: 0.9 },
-        overTime: { inflation: 0.0018, popularity: -0.0015 },
-        impact: "O caixa agradece, mas as ruas reagem mal."
-      }
-    },
-    timeoutPenalty: {
-      immediate: { popularity: -4.5, inflation: 0.5 },
-      overTime: { popularity: -0.001 },
-      impact: "A falta de resposta elevou o ruído político no setor."
+      immediate: { popularity: -2, cash: -4 },
+      overTime: { popularity: -0.00004 },
+      approval: { seguranca: -3 },
+      mood: "bad",
+      impact: "A sensação de vazio de liderança tomou conta do noticiário."
     }
   }
 ];
 
 const EVENT_LIBRARY = [
   {
-    title: "Crise global de crédito",
-    rarity: "rara",
-    probability: 0.12,
-    effect: { gdp: -45, inflation: 0.8, popularity: -2, cash: -18, unemployment: 0.4 },
-    news: "Mercados internacionais travam e investidores fogem de risco."
-  },
-  {
-    title: "Boom de exportações",
-    rarity: "rara",
-    probability: 0.11,
-    effect: { gdp: 42, cash: 20, popularity: 1.5, inflation: -0.4, unemployment: -0.3 },
-    news: "A demanda externa sobe e dá novo fôlego ao setor produtivo."
-  },
-  {
-    title: "Escândalo político",
-    rarity: "comum",
-    probability: 0.17,
-    effect: { popularity: -5, gdp: -10, cash: -8 },
-    news: "Denúncias atingem aliados e aumentam a tensão com o Congresso."
+    title: "Choque global de crédito",
+    priority: "high",
+    effect: { gdp: -0.05, inflation: 0.7, popularity: -2, cash: -14, unemployment: 0.3 },
+    approval: { economia: -4 },
+    body: "Mercados internacionais fecham a torneira e os investidores recuam."
   },
   {
     title: "Safra recorde",
-    rarity: "comum",
-    probability: 0.18,
-    effect: { inflation: -0.6, gdp: 18, popularity: 1, cash: 10 },
-    news: "A produção agrícola surpreende e alivia preços relevantes."
+    priority: "good",
+    effect: { gdp: 0.04, inflation: -0.6, popularity: 1.2, cash: 10 },
+    approval: { economia: 3, saude: 1 },
+    body: "A produção agrícola surpreende e alivia parte da pressão sobre preços."
   },
   {
-    title: "Crise energética",
-    rarity: "comum",
-    probability: 0.15,
-    effect: { inflation: 0.9, gdp: -14, popularity: -1.5, cash: -10 },
-    news: "A conta de energia encarece cadeias produtivas e pressiona o governo."
+    title: "Escândalo ministerial",
+    priority: "high",
+    effect: { popularity: -4.5, cash: -6, gdp: -0.02 },
+    approval: { seguranca: -2, educacao: -2 },
+    body: "A crise política volta a dominar manchetes e redes sociais."
+  },
+  {
+    title: "Boom internacional de commodities",
+    priority: "good",
+    effect: { gdp: 0.06, cash: 18, popularity: 2, inflation: -0.3 },
+    approval: { economia: 4 },
+    body: "As exportações aceleram e devolvem confiança ao mercado."
   }
 ];
 
-const state = {
-  config: DIFFICULTIES.medium,
-  gameOver: false,
-  stats: {},
-  previousStats: {},
-  history: { gdp: [], inflation: [], popularity: [] },
-  activeDecisions: [],
-  pendingModifiers: [],
-  news: [],
-  impacts: [],
-  timeline: [],
-  lastProcessedTick: 0,
-  nextDecisionTick: 2000,
-  nextNewsTick: 900,
-  nextAdvisorTick: 1200,
-  negativeCashTicks: 0
-};
-
 const elements = {
+  title: document.querySelector(".title-row h1"),
+  difficultyPill: document.getElementById("difficultyPill"),
+  timeLabel: document.getElementById("timeLabel"),
   playButton: document.getElementById("playButton"),
   pauseButton: document.getElementById("pauseButton"),
   speedButtons: Array.from(document.querySelectorAll(".speed-btn")),
-  clockLabel: document.getElementById("clockLabel"),
-  statusLabel: document.getElementById("statusLabel"),
-  difficultyTag: document.getElementById("difficultyTag"),
-  advisorTitle: document.getElementById("advisorTitle"),
-  advisorText: document.getElementById("advisorText"),
-  advisorMeta: document.getElementById("advisorMeta"),
-  decisionCounter: document.getElementById("decisionCounter"),
-  decisionList: document.getElementById("decisionList"),
-  impactFeed: document.getElementById("impactFeed"),
-  headlineChip: document.getElementById("headlineChip"),
-  newsFeed: document.getElementById("newsFeed"),
-  timeline: document.getElementById("timeline"),
-  endgameOverlay: document.getElementById("endgameOverlay"),
-  endgameBadge: document.getElementById("endgameBadge"),
-  endgameTitle: document.getElementById("endgameTitle"),
-  endgameText: document.getElementById("endgameText"),
-  resultGrid: document.getElementById("resultGrid"),
-  restartButton: document.getElementById("restartButton"),
-  hudCards: Array.from(document.querySelectorAll(".hud-card")),
+  headlineBadge: document.getElementById("headlineBadge"),
+  headlineTitle: document.getElementById("headlineTitle"),
+  headlineText: document.getElementById("headlineText"),
+  approvalValue: document.getElementById("approvalValue"),
+  approvalButton: document.getElementById("approvalButton"),
+  approvalEmojis: Array.from(document.querySelectorAll(".emoji-btn")),
+  alertTitle: document.getElementById("alertTitle"),
+  alertText: document.getElementById("alertText"),
+  dockItems: Array.from(document.querySelectorAll(".dock-item")),
+  panelEyebrow: document.getElementById("panelEyebrow"),
+  panelTitle: document.getElementById("panelTitle"),
+  panelChip: document.getElementById("panelChip"),
+  panelContent: document.getElementById("panelContent"),
+  statCards: Array.from(document.querySelectorAll(".stat-card")),
   statValues: {
     gdp: document.getElementById("gdpValue"),
     inflation: document.getElementById("inflationValue"),
@@ -271,86 +264,134 @@ const elements = {
     cash: document.getElementById("cashBar"),
     unemployment: document.getElementById("unemploymentBar")
   },
-  statDeltas: {
-    gdp: document.getElementById("gdpDelta"),
-    inflation: document.getElementById("inflationDelta"),
-    popularity: document.getElementById("popularityDelta"),
-    cash: document.getElementById("cashDelta"),
-    unemployment: document.getElementById("unemploymentDelta")
+  statDetails: {
+    gdp: document.getElementById("gdpDetail"),
+    inflation: document.getElementById("inflationDetail"),
+    popularity: document.getElementById("popularityDetail"),
+    cash: document.getElementById("cashDetail"),
+    unemployment: document.getElementById("unemploymentDetail")
   },
-  statStates: {
-    gdp: document.getElementById("gdpState"),
-    inflation: document.getElementById("inflationState"),
-    popularity: document.getElementById("popularityState"),
-    cash: document.getElementById("cashState"),
-    unemployment: document.getElementById("unemploymentState")
-  },
-  charts: {
-    gdp: document.getElementById("gdpChart"),
-    inflation: document.getElementById("inflationChart"),
-    popularity: document.getElementById("popularityChart")
-  }
+  endgameOverlay: document.getElementById("endgameOverlay"),
+  endgameBadge: document.getElementById("endgameBadge"),
+  endgameTitle: document.getElementById("endgameTitle"),
+  endgameText: document.getElementById("endgameText"),
+  resultGrid: document.getElementById("resultGrid"),
+  endgameActions: document.getElementById("endgameActions"),
+  restartButton: document.getElementById("restartButton")
+};
+
+const state = {
+  currentCountryId: "brazil",
+  currentPanel: "economy",
+  gameOver: false,
+  termNumber: 1,
+  difficultyLevel: 1,
+  stats: {},
+  previousStats: {},
+  approval: {},
+  history: { gdp: [], inflation: [], popularity: [] },
+  activeDecisions: [],
+  pendingEffects: [],
+  news: [],
+  events: [],
+  audioContext: null,
+  nextDecisionTick: 1800,
+  nextNewsTick: 1200,
+  nextCrisisTick: 1800,
+  negativeCashTicks: 0
 };
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
-function formatCurrencyBillions(value) {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    maximumFractionDigits: 0
-  }).format(value * 1000000000);
+function country() {
+  return COUNTRIES[state.currentCountryId];
 }
 
-function formatPercent(value) {
+function startDateForTerm() {
+  const base = new Date(START_DATE);
+  base.setFullYear(START_DATE.getFullYear() + (state.termNumber - 1) * 4);
+  return base;
+}
+
+function currentDate() {
+  const date = new Date(startDateForTerm());
+  const progress = tickAtual / TICKS_PER_YEAR;
+  date.setDate(date.getDate() + Math.floor(progress * 365));
+  return date;
+}
+
+function formatDate(date) {
+  return date.toLocaleDateString("pt-BR");
+}
+
+function shortMoney(value) {
+  const abs = Math.abs(value);
+  if (abs >= 1) {
+    return `${value.toFixed(1)}T`;
+  }
+  return `${Math.round(value * 1000)}B`;
+}
+
+function shortPercent(value) {
   return `${value.toFixed(1)}%`;
 }
 
-function deepCopy(value) {
-  return JSON.parse(JSON.stringify(value));
+function getAudioContext() {
+  if (!state.audioContext) {
+    state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  return state.audioContext;
 }
 
-function currentYear() {
-  return Math.floor(tickAtual / TICKS_PER_YEAR) + 1;
+function playTone(type = "click") {
+  try {
+    const ctx = getAudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = type === "alert" ? 190 : type === "good" ? 420 : 280;
+    gain.gain.value = 0.0001;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    const now = ctx.currentTime;
+    gain.gain.exponentialRampToValueAtTime(0.04, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+    osc.start(now);
+    osc.stop(now + 0.2);
+  } catch (error) {
+  }
 }
 
-function setRunningStatus() {
-  elements.statusLabel.textContent = jogoRodando ? `Rodando em ${velocidadeJogo}x` : "Pausado";
-}
-
-function initGame() {
+function initSimulation() {
   tickAtual = 0;
   jogoRodando = true;
   velocidadeJogo = 1;
   state.gameOver = false;
-  state.stats = deepCopy(state.config.start);
-  state.previousStats = deepCopy(state.config.start);
+  const baseCountry = country();
+  state.stats = { ...baseCountry.start };
+  state.previousStats = { ...baseCountry.start };
+  state.approval = { ...baseCountry.approval };
   state.history = {
     gdp: [state.stats.gdp],
     inflation: [state.stats.inflation],
     popularity: [state.stats.popularity]
   };
   state.activeDecisions = [];
-  state.pendingModifiers = [];
+  state.pendingEffects = [];
   state.news = [];
-  state.impacts = [];
-  state.timeline = [];
-  state.lastProcessedTick = 0;
+  state.events = [];
   state.nextDecisionTick = 1800;
-  state.nextNewsTick = 900;
-  state.nextAdvisorTick = 1200;
+  state.nextNewsTick = 1200;
+  state.nextCrisisTick = 1800;
   state.negativeCashTicks = 0;
-  elements.endgameOverlay.classList.add("hidden");
-  elements.speedButtons.forEach((button) => {
-    button.classList.toggle("active", Number(button.dataset.speed) === 1);
-  });
-  elements.difficultyTag.textContent = state.config.label;
-  addNews("Posse", "Novo governo assume sob pressão", "O país entra em compasso de espera enquanto o mercado testa sua capacidade de reagir rápido.");
-  addTimeline("Posse presidencial", "O mandato começou com economia estável, mas com margem curta para erros.");
-  addImpact("neutral", "Simulação iniciada", "O relógio político já está em movimento e o país reagirá continuamente.");
-  updateAdvisor();
+  document.body.classList.remove("critical");
+  updateHeader();
+  setActivePanel("economy");
+  pushNews("Monitor", "Novo gabinete assume", "O país aguarda sua primeira sequência de decisões.");
+  pushEvent("Início de mandato", "A equipe de governo toma posse sob observação constante.");
+  updateHeadline();
   renderAll();
 }
 
@@ -358,595 +399,685 @@ function startLoop() {
   if (loopId) {
     clearInterval(loopId);
   }
-  loopId = setInterval(gameLoop, 50);
+  loopId = setInterval(runLoop, 50);
 }
 
-function gameLoop() {
+function runLoop() {
   if (!jogoRodando || state.gameOver) {
     return;
   }
 
   tickAtual += velocidadeJogo;
-  processTicks(tickAtual - state.lastProcessedTick);
-  state.lastProcessedTick = tickAtual;
-  renderLiveOnly();
+  applyContinuousEffects();
+  processDecisionTimeouts();
+
+  if (tickAtual % 120 === 0) {
+    applyMacroDrift();
+    updateApprovalFromState();
+  }
+
+  if (tickAtual % 420 === 0) {
+    updateHistory();
+  }
+
+  if (tickAtual >= state.nextDecisionTick) {
+    spawnDecision();
+    state.nextDecisionTick = tickAtual + decisionInterval();
+  }
+
+  if (tickAtual >= state.nextNewsTick) {
+    injectIndicatorNews();
+    state.nextNewsTick = tickAtual + 1350;
+  }
+
+  if (tickAtual >= state.nextCrisisTick) {
+    maybeTriggerEvent();
+    state.nextCrisisTick = tickAtual + crisisInterval();
+  }
+
+  if (tickAtual % 200 === 0) {
+    updateHeadline();
+    updateAlertState();
+    checkGameOver();
+  }
+
+  renderAll();
 }
 
-function processTicks(deltaTicks) {
-  if (deltaTicks <= 0) {
-    return;
-  }
-
-  for (let processed = 0; processed < deltaTicks; processed += 1) {
-    const currentTick = tickAtual - deltaTicks + processed + 1;
-    applyContinuousSimulation();
-    processDecisionTimeouts(currentTick);
-
-    if (currentTick % 100 === 0) {
-      applyBatchEconomy();
-      checkPassiveWarnings();
-    }
-
-    if (currentTick % 400 === 0) {
-      updateHistory();
-    }
-
-    if (currentTick >= state.nextDecisionTick) {
-      spawnDecision(currentTick);
-      state.nextDecisionTick = currentTick + nextDecisionInterval();
-    }
-
-    if (currentTick >= state.nextNewsTick) {
-      generateNewsFromIndicators();
-      state.nextNewsTick = currentTick + 1400;
-    }
-
-    if (currentTick >= state.nextAdvisorTick) {
-      updateAdvisor();
-      state.nextAdvisorTick = currentTick + 1800;
-    }
-
-    if (currentTick % 2200 === 0) {
-      rollRandomEvent();
-    }
-
-    if (currentTick % 200 === 0) {
-      checkGameOver();
-      if (state.gameOver) {
-        break;
-      }
-    }
-  }
+function decisionInterval() {
+  const pressure = crisisPressure();
+  return Math.max(2500, Math.floor(6200 - pressure * 1500 + Math.random() * 800));
 }
 
-function applyContinuousSimulation() {
-  const stats = state.stats;
+function crisisInterval() {
+  const pressure = crisisPressure();
+  return Math.max(1200, Math.floor(2500 - pressure * 700));
+}
 
-  if (stats.inflation > 9) {
-    stats.popularity -= 0.0018 * (stats.inflation - 9);
-  }
-  if (stats.taxRate > 30) {
-    stats.gdp -= 0.0012 * (stats.taxRate - 30);
-  }
-  if (stats.gdp > 2400) {
-    stats.popularity += 0.0012 * ((stats.gdp - 2400) / 200);
-  }
-  if (stats.unemployment > 10) {
-    stats.popularity -= 0.0016 * (stats.unemployment - 10);
-  }
-  if (stats.cash < 80) {
-    stats.inflation += 0.0012 * ((80 - stats.cash) / 80);
-  }
+function crisisPressure() {
+  let pressure = 0;
+  if (state.stats.inflation > 14) pressure += 1;
+  if (state.stats.cash < 40) pressure += 1;
+  if (state.stats.popularity < 35) pressure += 1;
+  if (state.stats.unemployment > 14) pressure += 1;
+  return pressure;
+}
 
-  applyModifiers();
+function applyContinuousEffects() {
+  state.pendingEffects.forEach((effect) => {
+    Object.entries(effect.delta).forEach(([key, value]) => {
+      state.stats[key] += value;
+    });
+    effect.remaining -= 1;
+  });
+  state.pendingEffects = state.pendingEffects.filter((effect) => effect.remaining > 0);
+
+  if (state.stats.inflation > 10) {
+    state.stats.popularity -= 0.0022 * (state.stats.inflation - 10);
+  }
+  if (state.stats.taxRate > 30) {
+    state.stats.gdp -= 0.0008 * (state.stats.taxRate - 30);
+  }
+  if (state.stats.gdp > country().start.gdp) {
+    state.stats.popularity += 0.0006;
+  }
+  if (state.stats.unemployment > 11) {
+    state.stats.popularity -= 0.0018 * (state.stats.unemployment - 11);
+  }
+  if (state.stats.cash < 60) {
+    state.stats.inflation += 0.0009 * ((60 - state.stats.cash) / 60);
+  }
   normalizeStats();
 }
 
-function applyModifiers() {
-  state.pendingModifiers.forEach((modifier) => {
-    Object.entries(modifier.effect).forEach(([key, value]) => {
-      state.stats[key] += value;
-    });
-    modifier.remainingTicks -= 1;
-  });
-  state.pendingModifiers = state.pendingModifiers.filter((modifier) => modifier.remainingTicks > 0);
-}
+function applyMacroDrift() {
+  state.previousStats = { ...state.stats };
+  state.stats.cash += (state.stats.gdp - country().start.gdp) * 6;
+  state.stats.cash -= Math.max(0, state.stats.inflation - 8) * 0.35;
+  state.stats.gdp += (state.stats.popularity - 50) * 0.0008;
+  state.stats.gdp -= Math.max(0, state.stats.inflation - 14) * 0.002;
+  state.stats.unemployment -= (state.stats.gdp - country().start.gdp) * 0.12;
+  state.stats.unemployment += Math.max(0, state.stats.inflation - 12) * 0.02;
 
-function applyBatchEconomy() {
-  const stats = state.stats;
-  state.previousStats = deepCopy(state.stats);
-  stats.cash += (stats.gdp - 2300) * 0.0018;
-  stats.cash -= Math.max(0, stats.inflation - 8) * 0.22;
-  stats.unemployment -= (stats.gdp - 2300) * 0.00018;
-  stats.unemployment += Math.max(0, stats.inflation - 10) * 0.015;
-  stats.gdp += (stats.popularity - 50) * 0.06;
-  stats.gdp -= Math.max(0, stats.inflation - 12) * 0.28;
-
-  if (stats.cash < 0) {
-    state.negativeCashTicks += 100;
+  if (state.stats.cash < 0) {
+    state.negativeCashTicks += 120;
   } else {
-    state.negativeCashTicks = Math.max(0, state.negativeCashTicks - 150);
+    state.negativeCashTicks = Math.max(0, state.negativeCashTicks - 240);
   }
-
   normalizeStats();
 }
 
 function normalizeStats() {
-  state.stats.gdp = clamp(state.stats.gdp, 1200, 5200);
+  state.stats.gdp = clamp(state.stats.gdp, 0.15, 8);
   state.stats.inflation = clamp(state.stats.inflation, 0, 45);
   state.stats.popularity = clamp(state.stats.popularity, 0, 100);
-  state.stats.cash = clamp(state.stats.cash, -600, 900);
-  state.stats.unemployment = clamp(state.stats.unemployment, 2, 30);
-  state.stats.taxRate = clamp(state.stats.taxRate, 12, 42);
+  state.stats.cash = clamp(state.stats.cash, -250, 600);
+  state.stats.unemployment = clamp(state.stats.unemployment, 2, 35);
+  state.stats.taxRate = clamp(state.stats.taxRate, 12, 44);
+  Object.keys(state.approval).forEach((key) => {
+    state.approval[key] = clamp(state.approval[key], 0, 100);
+  });
 }
 
-function nextDecisionInterval() {
-  return Math.floor(5200 + Math.random() * 1800);
-}
-
-function spawnDecision(currentTick) {
+function spawnDecision() {
   if (state.activeDecisions.length >= 3) {
     return;
   }
-  const template = deepCopy(DECISION_LIBRARY[Math.floor(Math.random() * DECISION_LIBRARY.length)]);
-  template.spawnTick = currentTick;
-  template.deadlineTick = currentTick + template.duration;
+  const template = JSON.parse(JSON.stringify(DECISION_LIBRARY[Math.floor(Math.random() * DECISION_LIBRARY.length)]));
+  template.deadline = tickAtual + template.duration;
   state.activeDecisions.unshift(template);
   state.activeDecisions = state.activeDecisions.slice(0, 3);
-  addTimeline("Nova decisão", template.title);
-  addNews("Gabinete", `Nova decisão urgente: ${template.title}`, "O relógio está correndo e a omissão gera penalidade automática.");
+  pushNews("Decisão", template.title, "O gabinete exige uma resposta antes do prazo acabar.");
 }
 
-function processDecisionTimeouts(currentTick) {
-  const expired = state.activeDecisions.filter((decision) => currentTick >= decision.deadlineTick);
+function processDecisionTimeouts() {
+  const expired = state.activeDecisions.filter((decision) => tickAtual >= decision.deadline);
   if (!expired.length) {
     return;
   }
-
   expired.forEach((decision) => {
-    applyOutcome(decision.timeoutPenalty, `${decision.title} expirou`, "negative", true);
-    addNews("Crise", `Você perdeu o prazo: ${decision.title}`, decision.timeoutPenalty.impact);
+    applyDecisionEffect(decision.timeoutPenalty, `${decision.title} expirou`);
+    playTone("alert");
   });
-
-  state.activeDecisions = state.activeDecisions.filter((decision) => currentTick < decision.deadlineTick);
+  state.activeDecisions = state.activeDecisions.filter((decision) => tickAtual < decision.deadline);
 }
 
-function applyOutcome(outcome, title, tone, isPenalty = false) {
-  state.previousStats = deepCopy(state.stats);
-  Object.entries(outcome.immediate).forEach(([key, value]) => {
+function applyDecisionEffect(effect, title) {
+  state.previousStats = { ...state.stats };
+  Object.entries(effect.immediate).forEach(([key, value]) => {
     state.stats[key] += value;
   });
-
-  if (outcome.overTime) {
-    state.pendingModifiers.push({
-      effect: outcome.overTime,
-      remainingTicks: 3600
+  if (effect.overTime) {
+    state.pendingEffects.push({ delta: effect.overTime, remaining: 3600 });
+  }
+  if (effect.approval) {
+    Object.entries(effect.approval).forEach(([key, value]) => {
+      state.approval[key] += value;
     });
   }
-
   normalizeStats();
-  addImpact(tone, title, outcome.impact);
-  addTimeline(title, outcome.impact);
-  if (!isPenalty) {
-    generateFeedbackNews(title, outcome.impact, tone);
-  }
+  pushEvent(title, effect.impact, effect.mood);
+  pushNews("Governo", title, effect.impact);
+  updateHeadline(title, effect.impact);
 }
 
-function answerDecision(decisionId, optionKey) {
+function answerDecision(id, option) {
   if (!jogoRodando || state.gameOver) {
     return;
   }
-
-  const decision = state.activeDecisions.find((item) => item.id === decisionId && item.deadlineTick > tickAtual);
+  const decision = state.activeDecisions.find((item) => item.id === id);
   if (!decision) {
     return;
   }
-
-  const outcome = decision.options[optionKey];
-  applyOutcome(outcome, `${decision.title} (${outcome.label})`, optionKey === "approve" ? "positive" : "neutral");
+  applyDecisionEffect(decision.options[option], `${decision.title} — ${decision.options[option].label}`);
   state.activeDecisions = state.activeDecisions.filter((item) => item !== decision);
-  updateAdvisor();
+  playTone(option === "approve" ? "good" : "click");
+  updateAlertState();
   renderAll();
 }
 
-function generateFeedbackNews(title, text, tone) {
-  const category = tone === "positive" ? "Mercado" : tone === "negative" ? "Crise" : "Política";
-  addNews(category, title, text);
-}
-
-function rollRandomEvent() {
+function maybeTriggerEvent() {
   const event = EVENT_LIBRARY[Math.floor(Math.random() * EVENT_LIBRARY.length)];
-  if (Math.random() > event.probability) {
+  const pressureBoost = crisisPressure() * 0.08;
+  if (Math.random() > 0.16 + pressureBoost) {
     return;
   }
-
-  state.previousStats = deepCopy(state.stats);
+  state.previousStats = { ...state.stats };
   Object.entries(event.effect).forEach(([key, value]) => {
     state.stats[key] += value;
   });
-  normalizeStats();
-  addNews(event.rarity === "rara" ? "Evento raro" : "Evento", event.title, event.news);
-  addTimeline(event.title, event.news);
-  addImpact(event.effect.gdp >= 0 || event.effect.popularity >= 0 ? "positive" : "negative", event.title, event.news);
-}
-
-function generateNewsFromIndicators() {
-  const { inflation, popularity, gdp, cash, unemployment } = state.stats;
-  if (inflation > 22) {
-    addNews("Urgente", "Inflação dispara no varejo", "Consumidores sentem o choque dos preços e a pressão política sobe rapidamente.");
-  } else if (popularity < 30) {
-    addNews("Política", "Protestos se espalham contra o governo", "A queda de apoio popular já produz ruído nas ruas e no Congresso.");
-  } else if (cash < 0) {
-    addNews("Fiscal", "Tesouro opera no vermelho", "O governo trabalha sob forte tensão para recompor caixa.");
-  } else if (gdp > 2800 && unemployment < 9) {
-    addNews("Economia", "PIB cresce e o emprego reage", "A atividade acelera e parte do mercado começa a rever projeções.");
-  } else if (unemployment > 14) {
-    addNews("Trabalho", "Desemprego alto pressiona o Planalto", "Famílias sentem queda de renda e cobram ação imediata.");
-  } else {
-    addNews("Monitor", "Mercado observa o próximo movimento", "O país segue em compasso tenso, aguardando novas medidas do governo.");
-  }
-}
-
-function checkPassiveWarnings() {
-  if (state.stats.inflation > 18) {
-    addImpact("negative", "Inflação em alerta", "A perda de controle dos preços está corroendo apoio popular em tempo real.");
-  }
-  if (state.stats.cash < 40) {
-    addImpact("negative", "Caixa apertado", "O governo perdeu margem fiscal e qualquer erro agora pesa mais.");
-  }
-}
-
-function updateAdvisor() {
-  const stats = state.stats;
-  const openers = [
-    "Minha leitura do momento:",
-    "No radar do gabinete:",
-    "Se quiser sobreviver politicamente:"
-  ];
-
-  let message = "mantenha inflação e caixa sob vigilância, porque eles disparam crises em cadeia.";
-  if (stats.inflation > 16) {
-    message = "controle preços antes de tentar crescer mais, ou a popularidade vai derreter.";
-  } else if (stats.cash < 60) {
-    message = "reconstrua o caixa com alguma disciplina, porque o déficit prolongado derruba tudo ao redor.";
-  } else if (stats.unemployment > 12) {
-    message = "priorize decisões que acelerem investimento e emprego, mesmo com algum custo político.";
-  } else if (stats.popularity < 35) {
-    message = "qualquer atraso agora vira combustível para a oposição; responda rápido às decisões ativas.";
-  } else if (state.activeDecisions.length > 1) {
-    message = "há decisões demais abertas; resolva primeiro as com menos tempo restante.";
-  }
-
-  elements.advisorText.textContent = `${openers[Math.floor(Math.random() * openers.length)]} ${message}`;
-  elements.advisorMeta.textContent = `Decisões abertas: ${state.activeDecisions.length} • Velocidade ${velocidadeJogo}x`;
-}
-
-function checkGameOver() {
-  if (state.stats.popularity < 20) {
-    return endGame("impeachment");
-  }
-  if (state.stats.inflation > 30) {
-    return endGame("collapse");
-  }
-  if (state.negativeCashTicks >= 7200) {
-    return endGame("bankruptcy");
-  }
-  if (tickAtual >= TICKS_PER_YEAR * 4) {
-    if (state.stats.popularity > 50 && state.stats.inflation < 12 && state.stats.gdp > state.config.start.gdp) {
-      return endGame("victory");
-    }
-    return endGame("finish");
-  }
-  return false;
-}
-
-function endGame(reasonKey) {
-  const reason = GAME_OVER_REASONS[reasonKey];
-  state.gameOver = true;
-  jogoRodando = false;
-  setRunningStatus();
-  elements.endgameOverlay.classList.remove("hidden");
-  elements.endgameBadge.textContent = reason.badge;
-  elements.endgameTitle.textContent = reason.title;
-  elements.endgameText.textContent = reason.text;
-  elements.resultGrid.innerHTML = "";
-
-  const summary = [
-    { label: "Tempo de governo", value: `${currentYear()} ano(s)` },
-    { label: "Tick final", value: tickAtual.toLocaleString("pt-BR") },
-    { label: "PIB final", value: formatCurrencyBillions(state.stats.gdp) }
-  ];
-
-  summary.forEach((item) => {
-    const node = document.createElement("div");
-    node.className = "result-item";
-    node.innerHTML = `<span>${item.label}</span><strong>${item.value}</strong>`;
-    elements.resultGrid.appendChild(node);
+  Object.entries(event.approval || {}).forEach(([key, value]) => {
+    state.approval[key] += value;
   });
-
-  renderAll();
-  return true;
+  normalizeStats();
+  pushNews(event.priority === "high" ? "Alerta" : "Evento", event.title, event.body, event.priority);
+  pushEvent(event.title, event.body, event.priority === "high" ? "bad" : "good");
+  if (event.priority === "high") {
+    playTone("alert");
+  }
 }
 
-function addImpact(tone, title, text) {
-  state.impacts.unshift({ tone, title, text, tick: tickAtual });
-  state.impacts = state.impacts.slice(0, 8);
+function injectIndicatorNews() {
+  if (state.stats.inflation > 18) {
+    pushNews("Urgente", "Inflação dispara", "Os preços voltam a pressionar o humor nacional.", "priority");
+  } else if (state.stats.popularity < 30) {
+    pushNews("Política", "Protestos crescem nas capitais", "A oposição amplia o discurso de desgaste do governo.", "priority");
+  } else if (state.stats.gdp > country().start.gdp + 0.25) {
+    pushNews("Economia", "Economia acelera acima do esperado", "O mercado começa a revisar projeções para cima.", "good");
+  } else if (state.stats.cash < 0) {
+    pushNews("Fiscal", "Caixa entra no vermelho", "O Tesouro perde margem e qualquer erro fica mais caro.", "priority");
+  } else {
+    pushNews("Monitor", "Mercado observa próximo movimento", "Ainda há espaço para corrigir rota antes da crise.");
+  }
 }
 
-function addNews(category, title, text) {
-  state.news.unshift({ category, title, text, tick: tickAtual });
+function pushNews(type, title, body, priority = "neutral") {
+  state.news.unshift({ type, title, body, priority, tick: tickAtual });
   state.news = state.news.slice(0, 10);
 }
 
-function addTimeline(title, text) {
-  state.timeline.unshift({ title, text, tick: tickAtual });
-  state.timeline = state.timeline.slice(0, 10);
+function pushEvent(title, body, mood = "neutral") {
+  state.events.unshift({ title, body, mood, tick: tickAtual });
+  state.events = state.events.slice(0, 10);
 }
 
 function updateHistory() {
   state.history.gdp.push(state.stats.gdp);
   state.history.inflation.push(state.stats.inflation);
   state.history.popularity.push(state.stats.popularity);
-  if (state.history.gdp.length > 40) {
+  if (state.history.gdp.length > 32) {
     state.history.gdp.shift();
     state.history.inflation.shift();
     state.history.popularity.shift();
   }
 }
 
-function statConfig(stat) {
+function averageApproval() {
+  const values = Object.values(state.approval);
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function updateApprovalFromState() {
+  state.approval.economia += (state.stats.gdp > country().start.gdp ? 0.16 : -0.14);
+  state.approval.economia -= Math.max(0, state.stats.inflation - 10) * 0.03;
+  state.approval.saude += state.stats.inflation < 12 ? 0.04 : -0.05;
+  state.approval.seguranca += state.stats.popularity > 50 ? 0.03 : -0.06;
+  state.approval.educacao += state.stats.cash > 40 ? 0.03 : -0.04;
+  state.stats.popularity = averageApproval();
+  normalizeStats();
+}
+
+function statVisual(stat) {
   if (stat === "gdp") {
-    return {
-      range: [1200, 5200],
-      state: state.stats.gdp > 2800 ? "good" : state.stats.gdp > 2200 ? "warn" : "bad",
-      text: state.stats.gdp > 2800 ? "Crescendo" : state.stats.gdp > 2200 ? "Estável" : "Frágil",
-      color: state.stats.gdp > 2800 ? "var(--good)" : state.stats.gdp > 2200 ? "var(--warn)" : "var(--bad)"
-    };
+    return state.stats.gdp > country().start.gdp + 0.2 ? ["Crescendo", "--good"] : state.stats.gdp > country().start.gdp - 0.1 ? ["Estável", "--warn"] : ["Em queda", "--bad"];
   }
   if (stat === "inflation") {
-    return {
-      range: [0, 35],
-      state: state.stats.inflation < 8 ? "good" : state.stats.inflation < 15 ? "warn" : "bad",
-      text: state.stats.inflation < 8 ? "Controlada" : state.stats.inflation < 15 ? "Pressão" : "Crítica",
-      color: state.stats.inflation < 8 ? "var(--good)" : state.stats.inflation < 15 ? "var(--warn)" : "var(--bad)"
-    };
+    return state.stats.inflation < 8 ? ["Controlada", "--good"] : state.stats.inflation < 16 ? ["Em pressão", "--warn"] : ["Crítica", "--bad"];
   }
   if (stat === "popularity") {
-    return {
-      range: [0, 100],
-      state: state.stats.popularity > 55 ? "good" : state.stats.popularity > 35 ? "warn" : "bad",
-      text: state.stats.popularity > 55 ? "Apoio forte" : state.stats.popularity > 35 ? "Oscilando" : "Risco político",
-      color: state.stats.popularity > 55 ? "var(--good)" : state.stats.popularity > 35 ? "var(--warn)" : "var(--bad)"
-    };
+    return state.stats.popularity > 60 ? ["Apoio firme", "--good"] : state.stats.popularity > 40 ? ["Oscilando", "--warn"] : ["Desgaste forte", "--bad"];
   }
   if (stat === "cash") {
-    return {
-      range: [-300, 900],
-      state: state.stats.cash > 150 ? "good" : state.stats.cash > 0 ? "warn" : "bad",
-      text: state.stats.cash > 150 ? "Folga fiscal" : state.stats.cash > 0 ? "Apertado" : "No vermelho",
-      color: state.stats.cash > 150 ? "var(--good)" : state.stats.cash > 0 ? "var(--warn)" : "var(--bad)"
-    };
+    return state.stats.cash > 120 ? ["Folga fiscal", "--good"] : state.stats.cash > 0 ? ["Apertado", "--warn"] : ["No vermelho", "--bad"];
   }
-  return {
-    range: [2, 30],
-    state: state.stats.unemployment < 8 ? "good" : state.stats.unemployment < 12 ? "warn" : "bad",
-    text: state.stats.unemployment < 8 ? "Baixo" : state.stats.unemployment < 12 ? "Sensível" : "Alto",
-    color: state.stats.unemployment < 8 ? "var(--good)" : state.stats.unemployment < 12 ? "var(--warn)" : "var(--bad)"
+  return state.stats.unemployment < 9 ? ["Respirando", "--good"] : state.stats.unemployment < 14 ? ["Pressão moderada", "--warn"] : ["Crítico", "--bad"];
+}
+
+function statRatio(stat) {
+  const ranges = {
+    gdp: [0.2, 5],
+    inflation: [0, 35],
+    popularity: [0, 100],
+    cash: [-200, 600],
+    unemployment: [2, 35]
   };
+  const [min, max] = ranges[stat];
+  return clamp(((state.stats[stat] - min) / (max - min)) * 100, 0, 100);
 }
 
-function deltaText(current, previous, isMoney = false) {
-  const delta = current - previous;
-  if (Math.abs(delta) < 0.05) {
-    return "Estável";
+function updateHeader() {
+  elements.title.textContent = `${country().title} ${country().flag}`;
+  elements.difficultyPill.textContent = country().difficultyName;
+}
+
+function updateHeadline(title, body) {
+  const latest = state.news[0];
+  elements.headlineBadge.textContent = latest ? latest.type : "Radar Nacional";
+  elements.headlineTitle.textContent = title || (latest ? latest.title : "O gabinete acompanha sinais mistos da economia");
+  elements.headlineText.textContent = body || (latest ? latest.body : "O país ainda oferece espaço para corrigir a rota.");
+}
+
+function updateAlertState() {
+  let title = "Sem alertas críticos";
+  let text = "O governo segue com margem de manobra.";
+  const critical = state.stats.inflation > 18 || state.stats.cash < 0 || state.stats.popularity < 28;
+  document.body.classList.toggle("critical", critical);
+  if (state.stats.inflation > 18) {
+    title = "⚠️ Inflação em risco";
+    text = "A sensação de perda de controle já aparece nas ruas.";
+  } else if (state.stats.cash < 0) {
+    title = "⚠️ Caixa em colapso";
+    text = "O Tesouro opera no vermelho e aumenta a instabilidade.";
+  } else if (state.stats.popularity < 28) {
+    title = "⚠️ Aprovação desabando";
+    text = "A base política entrou em zona de risco.";
   }
-  const prefix = delta > 0 ? "+" : "";
-  const suffix = isMoney ? " bi" : "%";
-  return `${prefix}${delta.toFixed(1)}${suffix}`;
+  elements.alertTitle.textContent = title;
+  elements.alertText.textContent = text;
 }
 
-function renderHud() {
-  elements.statValues.gdp.textContent = formatCurrencyBillions(state.stats.gdp);
-  elements.statValues.inflation.textContent = formatPercent(state.stats.inflation);
-  elements.statValues.popularity.textContent = formatPercent(state.stats.popularity);
-  elements.statValues.cash.textContent = formatCurrencyBillions(state.stats.cash);
-  elements.statValues.unemployment.textContent = formatPercent(state.stats.unemployment);
+function renderStatsStrip() {
+  elements.timeLabel.textContent = `Ano ${Math.floor(tickAtual / TICKS_PER_YEAR) + 1} — ${formatDate(currentDate())}`;
+  elements.approvalValue.textContent = `${Math.round(state.stats.popularity)}%`;
 
-  Object.keys(elements.statValues).forEach((stat) => {
-    const config = statConfig(stat);
-    const [min, max] = config.range;
-    const ratio = ((state.stats[stat] - min) / (max - min)) * 100;
-    const card = elements.hudCards.find((item) => item.dataset.stat === stat);
-    card.classList.remove("good", "warn", "bad", "flash");
-    card.classList.add(config.state);
-    void card.offsetWidth;
-    card.classList.add("flash");
-    elements.statBars[stat].style.width = `${clamp(ratio, 0, 100)}%`;
-    elements.statBars[stat].style.background = `linear-gradient(90deg, ${config.color}, ${config.color})`;
-    elements.statStates[stat].textContent = config.text;
+  const values = {
+    gdp: shortMoney(state.stats.gdp),
+    inflation: shortPercent(state.stats.inflation),
+    popularity: shortPercent(state.stats.popularity),
+    cash: shortMoney(state.stats.cash / 1000),
+    unemployment: shortPercent(state.stats.unemployment)
+  };
+
+  Object.entries(values).forEach(([key, value]) => {
+    elements.statValues[key].textContent = value;
+    elements.statBars[key].style.width = `${statRatio(key)}%`;
+    const [detail, variable] = statVisual(key);
+    elements.statDetails[key].textContent = detail;
+    elements.statBars[key].style.background = `linear-gradient(90deg, var(${variable}), var(${variable}))`;
+    const card = elements.statCards.find((item) => item.dataset.stat === key);
+    card.classList.toggle("alert", variable === "--bad");
   });
-
-  elements.statDeltas.gdp.textContent = deltaText(state.stats.gdp, state.previousStats.gdp, true);
-  elements.statDeltas.inflation.textContent = deltaText(state.stats.inflation, state.previousStats.inflation);
-  elements.statDeltas.popularity.textContent = deltaText(state.stats.popularity, state.previousStats.popularity);
-  elements.statDeltas.cash.textContent = deltaText(state.stats.cash, state.previousStats.cash, true);
-  elements.statDeltas.unemployment.textContent = deltaText(state.stats.unemployment, state.previousStats.unemployment);
 }
 
-function renderClock() {
-  elements.clockLabel.textContent = `Ano ${currentYear()} • Tick ${tickAtual.toLocaleString("pt-BR")}`;
-  setRunningStatus();
+function drawApprovalEmoji() {
+  const value = state.stats.popularity;
+  const mood = value < 20 ? "rage" : value < 40 ? "bad" : value < 55 ? "neutral" : value < 75 ? "good" : "great";
+  elements.approvalEmojis.forEach((button) => {
+    button.classList.toggle("active", button.dataset.mood === mood);
+  });
 }
 
-function renderDecisions() {
-  elements.decisionCounter.textContent = `${state.activeDecisions.length} ativa(s)`;
-  elements.decisionList.innerHTML = "";
+function lineChart(values, color) {
+  const points = values.map((value, index) => `<span class="spark-point" style="left:${(index / Math.max(values.length - 1, 1)) * 100}%;bottom:${value}%;background:${color}"></span>`).join("");
+  return `<div class="sparkline">${points}</div>`;
+}
 
+function renderPanel() {
+  const panelMap = {
+    economy: renderEconomyPanel,
+    indicators: renderIndicatorsPanel,
+    news: renderNewsPanel,
+    decisions: renderDecisionsPanel,
+    advisor: renderAdvisorPanel,
+    world: renderWorldPanel,
+    stats: renderStatsPanel,
+    settings: renderSettingsPanel
+  };
+  panelMap[state.currentPanel]();
+}
+
+function setPanelHeader(eyebrow, title, chip) {
+  elements.panelEyebrow.textContent = eyebrow;
+  elements.panelTitle.textContent = title;
+  elements.panelChip.textContent = chip;
+}
+
+function renderEconomyPanel() {
+  setPanelHeader("Economia", "Painel Econômico", "Ao vivo");
+  elements.panelContent.innerHTML = `
+    <div class="stats-grid">
+      <article class="metric-card">
+        <span class="mini-label">PIB Projetado</span>
+        <strong>${shortMoney(state.stats.gdp)}</strong>
+        <span class="detail-line">Base inicial: ${shortMoney(country().start.gdp)}</span>
+      </article>
+      <article class="metric-card">
+        <span class="mini-label">Caixa Fiscal</span>
+        <strong>${shortMoney(state.stats.cash / 1000)}</strong>
+        <span class="detail-line">Tributação atual: ${state.stats.taxRate.toFixed(1)}%</span>
+      </article>
+      <article class="metric-card">
+        <span class="mini-label">Pressão Econômica</span>
+        <strong>${crisisPressure()}/4</strong>
+        <span class="detail-line">Eventos aceleram quando a pressão sobe.</span>
+      </article>
+    </div>
+  `;
+}
+
+function renderIndicatorsPanel() {
+  setPanelHeader("Indicadores", "Aprovação Nacional", `${Math.round(state.stats.popularity)}%`);
+  const bars = Object.entries(state.approval).map(([label, value]) => `
+    <div class="mini-bar-row">
+      <span class="bar-label">${label[0].toUpperCase() + label.slice(1)}</span>
+      <div class="mini-bar-track"><div class="mini-bar-fill" style="width:${value}%;background:linear-gradient(90deg, ${value > 60 ? "var(--good)" : value > 40 ? "var(--warn)" : "var(--bad)"}, ${value > 60 ? "var(--good)" : value > 40 ? "var(--warn)" : "var(--bad)"})"></div></div>
+      <strong>${Math.round(value)}%</strong>
+    </div>
+  `).join("");
+  elements.panelContent.innerHTML = `<div class="approval-card-panel"><div class="mini-bars">${bars}</div></div>`;
+}
+
+function renderNewsPanel() {
+  setPanelHeader("Notícias", "Feed Nacional", state.news[0] ? state.news[0].type : "Monitor");
+  const cards = state.news.map((item) => `
+    <article class="feed-card ${item.priority === "priority" ? "priority" : item.priority === "good" ? "good" : "neutral"}">
+      <span class="mini-label">${item.type} • ${formatDate(currentDate())}</span>
+      <strong>${item.title}</strong>
+      <p>${item.body}</p>
+    </article>
+  `).join("");
+  elements.panelContent.innerHTML = `<div class="feed-grid">${cards}</div>`;
+}
+
+function renderDecisionsPanel() {
+  setPanelHeader("Decisões", "Gabinete", `${state.activeDecisions.length} abertas`);
   if (!state.activeDecisions.length) {
-    const empty = document.createElement("div");
-    empty.className = "impact-item neutral";
-    empty.innerHTML = "<h3>Sem decisões abertas</h3><p>O gabinete está quieto por enquanto, mas o relógio continuará trazendo pressão.</p>";
-    elements.decisionList.appendChild(empty);
+    elements.panelContent.innerHTML = `<article class="feed-card neutral"><strong>Sem decisões urgentes</strong><p>O gabinete está momentaneamente estável, mas novas demandas surgirão.</p></article>`;
+    return;
+  }
+  const cards = state.activeDecisions.map((decision) => {
+    const remaining = Math.max(0, decision.deadline - tickAtual);
+    return `
+      <article class="decision-card ${remaining < 1400 ? "expiring" : ""}">
+        <div class="decision-top">
+          <strong>${decision.title}</strong>
+          <span class="panel-chip">${remaining} ticks</span>
+        </div>
+        <p>${decision.body}</p>
+        <div class="decision-actions">
+          <button class="decision-btn primary" data-id="${decision.id}" data-option="approve">${decision.options.approve.label}</button>
+          <button class="decision-btn secondary" data-id="${decision.id}" data-option="reject">${decision.options.reject.label}</button>
+        </div>
+      </article>
+    `;
+  }).join("");
+  elements.panelContent.innerHTML = `<div class="decision-grid">${cards}</div>`;
+  elements.panelContent.querySelectorAll(".decision-btn").forEach((button) => {
+    button.addEventListener("click", () => answerDecision(button.dataset.id, button.dataset.option));
+  });
+}
+
+function renderAdvisorPanel() {
+  setPanelHeader("Conselheiro", "Centro Estratégico", "IA interna");
+  const advice = crisisPressure() > 2
+    ? "As crises estão acumulando camadas. Responda primeiro o que atinge inflação e caixa."
+    : state.activeDecisions.length > 1
+      ? "Há mais de uma frente aberta. Priorize a que está mais perto do prazo."
+      : "Sua janela de controle ainda existe. Use decisões para ajustar setores específicos.";
+  elements.panelContent.innerHTML = `
+    <article class="advisor-card">
+      <span class="mini-label">Helena Duarte</span>
+      <strong>Leitura do gabinete</strong>
+      <p>${advice}</p>
+    </article>
+  `;
+}
+
+function renderWorldPanel() {
+  setPanelHeader("Relações", "Relações Internacionais", country().name);
+  const cards = country().relations.map((item) => `
+    <article class="country-card">
+      <div class="country-row">
+        <strong>${item.flag} ${item.name}</strong>
+        <span class="country-meta">${item.status}</span>
+      </div>
+    </article>
+  `).join("");
+  elements.panelContent.innerHTML = `<div class="world-grid">${cards}</div>`;
+}
+
+function renderStatsPanel() {
+  setPanelHeader("Estatísticas", "Histórico do Mandato", "Tempo real");
+  const gdpPoints = state.history.gdp.map((value) => clamp((value / 4) * 100, 4, 96));
+  const inflationPoints = state.history.inflation.map((value) => clamp((value / 35) * 100, 4, 96));
+  const popPoints = state.history.popularity.map((value) => clamp(value, 4, 96));
+  elements.panelContent.innerHTML = `
+    <div class="stats-grid">
+      <article class="metric-card">
+        <span class="mini-label">PIB</span>
+        ${lineChart(gdpPoints, "var(--good)")}
+      </article>
+      <article class="metric-card">
+        <span class="mini-label">Inflação</span>
+        ${lineChart(inflationPoints, "var(--warn)")}
+      </article>
+      <article class="metric-card">
+        <span class="mini-label">Popularidade</span>
+        ${lineChart(popPoints, "var(--accent)")}
+      </article>
+    </div>
+  `;
+}
+
+function renderSettingsPanel() {
+  setPanelHeader("Ajustes", "Configurações", jogoRodando ? `${velocidadeJogo}x` : "Pausado");
+  elements.panelContent.innerHTML = `
+    <div class="settings-grid">
+      <article class="settings-card">
+        <span class="mini-label">Velocidade</span>
+        <strong>${velocidadeJogo}x</strong>
+        <span class="settings-line">Use os ícones do topo para acelerar ou pausar.</span>
+      </article>
+      <article class="settings-card">
+        <span class="mini-label">País</span>
+        <strong>${country().flag} ${country().name}</strong>
+        <span class="settings-line">O cenário atual muda a tensão econômica e política.</span>
+      </article>
+    </div>
+  `;
+}
+
+function renderEndgame(reason, allowReelection = false) {
+  state.gameOver = true;
+  jogoRodando = false;
+  elements.endgameOverlay.classList.remove("hidden");
+  elements.endgameBadge.textContent = reason.badge;
+  elements.endgameTitle.textContent = reason.title;
+  elements.endgameText.textContent = reason.text;
+  elements.resultGrid.innerHTML = `
+    <article class="result-item"><span>Popularidade</span><strong>${Math.round(state.stats.popularity)}%</strong></article>
+    <article class="result-item"><span>PIB</span><strong>${shortMoney(state.stats.gdp)}</strong></article>
+    <article class="result-item"><span>Inflação</span><strong>${shortPercent(state.stats.inflation)}</strong></article>
+  `;
+  elements.endgameActions.innerHTML = "";
+
+  if (allowReelection) {
+    const reelect = document.createElement("button");
+    reelect.className = "primary-btn";
+    reelect.textContent = "Reeleição";
+    reelect.addEventListener("click", handleReelection);
+
+    const endGov = document.createElement("button");
+    endGov.className = "secondary-btn";
+    endGov.textContent = "Encerrar governo";
+    endGov.addEventListener("click", renderCountrySelection);
+    elements.endgameActions.append(reelect, endGov);
     return;
   }
 
-  state.activeDecisions.forEach((decision) => {
-    const remaining = Math.max(0, decision.deadlineTick - tickAtual);
-    const expiring = remaining < 1200;
-    const card = document.createElement("article");
-    card.className = `decision-card ${expiring ? "expiring" : ""}`;
-    const tags = decision.tags.map((tag) => `<span class="decision-tag">${tag}</span>`).join("");
-    card.innerHTML = `
-      <div class="decision-tags">${tags}</div>
-      <h3>${decision.title}</h3>
-      <p>${decision.body}</p>
-      <div class="decision-footer">
-        <span class="decision-deadline">Prazo: ${remaining.toLocaleString("pt-BR")} ticks</span>
-        <div class="decision-actions">
-          <button class="decision-option" data-id="${decision.id}" data-option="approve">${decision.options.approve.label}</button>
-          <button class="decision-option" data-id="${decision.id}" data-option="reject">${decision.options.reject.label}</button>
-        </div>
-      </div>
-    `;
-    elements.decisionList.appendChild(card);
+  const restart = document.createElement("button");
+  restart.className = "primary-btn";
+  restart.textContent = "Reiniciar";
+  restart.addEventListener("click", () => {
+    elements.endgameOverlay.classList.add("hidden");
+    initSimulation();
   });
+  elements.endgameActions.appendChild(restart);
+}
 
-  elements.decisionList.querySelectorAll(".decision-option").forEach((button) => {
+function handleReelection() {
+  playTone("good");
+  state.termNumber += 1;
+  state.difficultyLevel += 1;
+  document.body.classList.add("reelection-mode");
+  const base = country();
+  base.start.inflation = clamp(base.start.inflation + 1.4, 0, 32);
+  base.start.unemployment = clamp(base.start.unemployment + 1.5, 2, 30);
+  base.start.cash = clamp(base.start.cash - 24, -150, 500);
+  base.difficultyName = "Mandato sob Fogo";
+  elements.endgameOverlay.classList.add("hidden");
+  initSimulation();
+}
+
+function renderCountrySelection() {
+  const countries = ["argentina", "venezuela", "southafrica"].map((id) => {
+    const item = COUNTRIES[id];
+    return `
+      <article class="country-card">
+        <div class="country-row">
+          <strong>${item.flag} ${item.name}</strong>
+          <span class="country-chip">${item.difficultyName}</span>
+        </div>
+        <p>Inflação alta, caixa frágil e pressão social elevada.</p>
+        <button class="country-btn" data-country="${id}">Governar</button>
+      </article>
+    `;
+  }).join("");
+  elements.endgameTitle.textContent = "Escolha o próximo país";
+  elements.endgameText.textContent = "Outros governos em crise também procuram uma liderança capaz de sobreviver ao caos.";
+  elements.endgameActions.innerHTML = "";
+  elements.resultGrid.innerHTML = `<div class="country-list">${countries}</div>`;
+  elements.resultGrid.querySelectorAll(".country-btn").forEach((button) => {
     button.addEventListener("click", () => {
-      answerDecision(button.dataset.id, button.dataset.option);
+      state.currentCountryId = button.dataset.country;
+      state.termNumber = 1;
+      state.difficultyLevel = 1;
+      document.body.classList.remove("reelection-mode");
+      elements.endgameOverlay.classList.add("hidden");
+      initSimulation();
     });
   });
 }
 
-function renderImpacts() {
-  elements.impactFeed.innerHTML = "";
-  state.impacts.forEach((impact) => {
-    const item = document.createElement("article");
-    item.className = `impact-item ${impact.tone}`;
-    item.innerHTML = `<h3>${impact.title}</h3><p>${impact.text}</p><strong>Tick ${impact.tick.toLocaleString("pt-BR")}</strong>`;
-    elements.impactFeed.appendChild(item);
-  });
-}
-
-function renderNews() {
-  elements.newsFeed.innerHTML = "";
-  const headline = state.news[0];
-  elements.headlineChip.textContent = headline ? headline.title : "Mercado observando";
-  state.news.forEach((news) => {
-    const item = document.createElement("article");
-    item.className = "news-item";
-    item.innerHTML = `<span class="eyebrow">${news.category} • Tick ${news.tick.toLocaleString("pt-BR")}</span><h3>${news.title}</h3><p>${news.text}</p>`;
-    elements.newsFeed.appendChild(item);
-  });
-}
-
-function renderTimeline() {
-  elements.timeline.innerHTML = "";
-  state.timeline.forEach((entry) => {
-    const item = document.createElement("article");
-    item.className = "timeline-item";
-    item.innerHTML = `<span class="eyebrow">Tick ${entry.tick.toLocaleString("pt-BR")}</span><h3>${entry.title}</h3><p>${entry.text}</p>`;
-    elements.timeline.appendChild(item);
-  });
-}
-
-function drawLineChart(canvas, values, color, label) {
-  const ctx = canvas.getContext("2d");
-  const width = canvas.width;
-  const height = canvas.height;
-  const padding = 24;
-  const min = Math.min(...values) * 0.96;
-  const max = Math.max(...values) * 1.04;
-  const range = Math.max(max - min, 1);
-
-  ctx.clearRect(0, 0, width, height);
-  ctx.fillStyle = "rgba(255,255,255,0.42)";
-  ctx.fillRect(0, 0, width, height);
-
-  ctx.strokeStyle = "rgba(31, 47, 36, 0.12)";
-  ctx.lineWidth = 1;
-  for (let i = 0; i < 4; i += 1) {
-    const y = padding + ((height - padding * 2) / 3) * i;
-    ctx.beginPath();
-    ctx.moveTo(padding, y);
-    ctx.lineTo(width - padding, y);
-    ctx.stroke();
+function checkGameOver() {
+  if (state.stats.popularity < 20) {
+    renderEndgame({
+      badge: "Impeachment",
+      title: "O Congresso derrubou o governo",
+      text: "A aprovação desmoronou e a base política abandonou seu mandato."
+    });
+    return;
   }
-
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  values.forEach((value, index) => {
-    const x = padding + ((width - padding * 2) / Math.max(values.length - 1, 1)) * index;
-    const y = height - padding - ((value - min) / range) * (height - padding * 2);
-    if (index === 0) {
-      ctx.moveTo(x, y);
-    } else {
-      ctx.lineTo(x, y);
-    }
-  });
-  ctx.stroke();
-
-  ctx.fillStyle = color;
-  values.forEach((value, index) => {
-    const x = padding + ((width - padding * 2) / Math.max(values.length - 1, 1)) * index;
-    const y = height - padding - ((value - min) / range) * (height - padding * 2);
-    ctx.beginPath();
-    ctx.arc(x, y, 4, 0, Math.PI * 2);
-    ctx.fill();
-  });
-
-  ctx.fillStyle = "#1f2f24";
-  ctx.font = "700 13px Segoe UI";
-  ctx.fillText(label, padding, 18);
+  if (state.stats.inflation > 30) {
+    renderEndgame({
+      badge: "Colapso econômico",
+      title: "A inflação fugiu ao controle",
+      text: "O país entrou em pânico de preços e sua gestão perdeu credibilidade."
+    });
+    return;
+  }
+  if (state.negativeCashTicks >= 9600) {
+    renderEndgame({
+      badge: "Falência fiscal",
+      title: "O Tesouro entrou em colapso",
+      text: "O caixa negativo por tempo demais travou sua capacidade de governar."
+    });
+    return;
+  }
+  if (tickAtual >= TICKS_PER_YEAR * 4) {
+    renderEndgame({
+      badge: "Fim de mandato",
+      title: "O mandato chegou ao fim",
+      text: "A população avalia se você merece continuar no poder."
+    }, state.stats.popularity > 65);
+  }
 }
 
-function renderCharts() {
-  drawLineChart(elements.charts.gdp, state.history.gdp, "#148046", "PIB");
-  drawLineChart(elements.charts.inflation, state.history.inflation, "#c98a19", "Inflação");
-  drawLineChart(elements.charts.popularity, state.history.popularity, "#1c4f99", "Popularidade");
-}
-
-function renderLiveOnly() {
-  renderClock();
-  renderHud();
-  renderDecisions();
-  renderCharts();
+function setActivePanel(panel) {
+  state.currentPanel = panel;
+  elements.dockItems.forEach((item) => {
+    item.classList.toggle("active", item.dataset.panel === panel);
+  });
+  renderPanel();
 }
 
 function renderAll() {
-  renderClock();
-  renderHud();
-  renderDecisions();
-  renderImpacts();
-  renderNews();
-  renderTimeline();
-  renderCharts();
+  updateHeader();
+  renderStatsStrip();
+  drawApprovalEmoji();
+  renderPanel();
 }
 
 elements.playButton.addEventListener("click", () => {
-  if (!state.gameOver) {
-    jogoRodando = true;
-    setRunningStatus();
-  }
+  jogoRodando = true;
+  playTone("click");
 });
 
 elements.pauseButton.addEventListener("click", () => {
   jogoRodando = false;
-  setRunningStatus();
+  playTone("click");
 });
 
 elements.speedButtons.forEach((button) => {
   button.addEventListener("click", () => {
     velocidadeJogo = Number(button.dataset.speed);
     elements.speedButtons.forEach((item) => item.classList.toggle("active", item === button));
-    setRunningStatus();
+    playTone("click");
+  });
+});
+
+elements.dockItems.forEach((item) => {
+  item.addEventListener("click", () => setActivePanel(item.dataset.panel));
+});
+
+elements.approvalButton.addEventListener("click", () => setActivePanel("indicators"));
+elements.approvalEmojis.forEach((button) => {
+  button.addEventListener("click", () => {
+    setActivePanel("indicators");
+    elements.approvalEmojis.forEach((item) => item.classList.remove("active"));
+    button.classList.add("active");
+    playTone("click");
   });
 });
 
 elements.restartButton.addEventListener("click", () => {
-  initGame();
+  elements.endgameOverlay.classList.add("hidden");
+  state.currentCountryId = "brazil";
+  state.termNumber = 1;
+  state.difficultyLevel = 1;
+  document.body.classList.remove("reelection-mode");
+  initSimulation();
 });
 
-initGame();
+initSimulation();
 startLoop();
