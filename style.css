@@ -29,6 +29,17 @@ body {
   overflow-x: hidden;
 }
 
+body.dark-theme {
+  --bg-1: #0f1718;
+  --bg-2: #162022;
+  --glass: rgba(18, 26, 30, 0.7);
+  --glass-strong: rgba(26, 36, 40, 0.86);
+  --line: rgba(203, 230, 214, 0.08);
+  --text: #edf6ef;
+  --muted: #9eb2a5;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+}
+
 body::before {
   content: "";
   position: fixed;
@@ -199,7 +210,9 @@ body.reelection-mode .hero-board {
 .decision-btn,
 .primary-btn,
 .secondary-btn,
-.country-btn {
+.country-btn,
+.toggle-btn,
+.mode-btn {
   border: none;
   cursor: pointer;
   transition: transform 0.18s ease, background 0.18s ease, opacity 0.18s ease;
@@ -220,14 +233,18 @@ body.reelection-mode .hero-board {
 .decision-btn:hover,
 .primary-btn:hover,
 .secondary-btn:hover,
-.country-btn:hover {
+.country-btn:hover,
+.toggle-btn:hover,
+.mode-btn:hover {
   transform: translateY(-1px);
 }
 
 .speed-btn.active,
 .dock-item.active,
 .emoji-btn.active,
-.primary-btn {
+.primary-btn,
+.toggle-btn.active,
+.mode-btn.active {
   color: #fff;
   background: linear-gradient(135deg, var(--accent), #2e80dc);
 }
@@ -349,11 +366,21 @@ body.reelection-mode .hero-board {
 
 .mini-action,
 .secondary-btn,
-.country-btn {
+.country-btn,
+.toggle-btn,
+.mode-btn {
   padding: 10px 14px;
   border-radius: 14px;
   font-weight: 700;
   background: rgba(18, 33, 23, 0.08);
+}
+
+.toggle-row,
+.mode-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
 }
 
 .approval-emojis {

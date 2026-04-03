@@ -273,6 +273,11 @@ const elements = {
     unemployment: document.getElementById("unemploymentDetail")
   },
   endgameOverlay: document.getElementById("endgameOverlay"),
+  confirmOverlay: document.getElementById("confirmOverlay"),
+  confirmBadge: document.getElementById("confirmBadge"),
+  confirmTitle: document.getElementById("confirmTitle"),
+  confirmText: document.getElementById("confirmText"),
+  confirmActions: document.getElementById("confirmActions"),
   endgameBadge: document.getElementById("endgameBadge"),
   endgameTitle: document.getElementById("endgameTitle"),
   endgameText: document.getElementById("endgameText"),
@@ -319,7 +324,18 @@ const state = {
     eficienciaEstado: 46
   },
   lastDecisionFeedbackId: null,
-  popupCooldowns: {}
+  popupCooldowns: {},
+  settings: {
+    gameMode: "casual",
+    soundOn: true,
+    theme: "light"
+  }
+};
+
+const GAME_MODES = {
+  iniciante: { intervalBonus: 2200, inflationFactor: 0.8, popularityFactor: 1.15 },
+  casual: { intervalBonus: 0, inflationFactor: 1, popularityFactor: 1 },
+  veterano: { intervalBonus: -1800, inflationFactor: 1.18, popularityFactor: 0.88 }
 };
 
 function clamp(value, min, max) {
@@ -367,6 +383,9 @@ function getAudioContext() {
 }
 
 function playTone(type = "click") {
+  if (!state.settings.soundOn) {
+    return;
+  }
   try {
     const ctx = getAudioContext();
     const osc = ctx.createOscillator();
@@ -387,7 +406,7 @@ function playTone(type = "click") {
 
 function initSimulation() {
   tickAtual = 0;
-  jogoRodando = true;
+  jogoRodando = false;
   velocidadeJogo = 1;
   state.gameOver = false;
   const baseCountry = country();
@@ -428,6 +447,7 @@ function initSimulation() {
   state.lastDecisionFeedbackId = null;
   state.popupCooldowns = {};
   document.body.classList.remove("critical");
+  document.body.classList.toggle("dark-theme", state.settings.theme === "dark");
   elements.alertStack.innerHTML = "";
   updateHeader();
   setActivePanel("economy");
@@ -490,11 +510,12 @@ function decisionHeartbeat() {
   if (state.gameOver) {
     return;
   }
+  const mode = GAME_MODES[state.settings.gameMode];
   const now = Date.now();
   const elapsed = now - state.lastDecisionHeartbeat;
   state.lastDecisionHeartbeat = now;
   state.decisionClockMs += elapsed;
-  const intervalMs = 9000 + crisisPressure() * 1200;
+  const intervalMs = Math.max(5000, 15000 + crisisPressure() * 1800 + mode.intervalBonus);
   if (state.decisionClockMs >= intervalMs) {
     state.decisionClockMs = 0;
     spawnDecision();
@@ -531,19 +552,19 @@ function applyContinuousEffects() {
   state.pendingEffects = state.pendingEffects.filter((effect) => effect.remaining > 0);
 
   if (state.stats.inflation > 10) {
-    state.stats.popularity -= 0.0022 * (state.stats.inflation - 10);
+    state.stats.popularity -= 0.0012 * (state.stats.inflation - 10);
   }
   if (state.stats.taxRate > 30) {
-    state.stats.gdp -= 0.0008 * (state.stats.taxRate - 30);
+    state.stats.gdp -= 0.00045 * (state.stats.taxRate - 30);
   }
   if (state.stats.gdp > country().start.gdp) {
-    state.stats.popularity += 0.0006;
+    state.stats.popularity += 0.00045;
   }
   if (state.stats.unemployment > 11) {
-    state.stats.popularity -= 0.0018 * (state.stats.unemployment - 11);
+    state.stats.popularity -= 0.001 * (state.stats.unemployment - 11);
   }
   if (state.stats.cash < 60) {
-    state.stats.inflation += 0.0009 * ((60 - state.stats.cash) / 60);
+    state.stats.inflation += 0.00045 * ((60 - state.stats.cash) / 60);
   }
   normalizeStats();
 }
@@ -568,24 +589,27 @@ function applyMacroDrift() {
 
 function calculateEconomy() {
   const f = state.finance;
+  const mode = GAME_MODES[state.settings.gameMode];
   const pibBase = Math.max(state.stats.gdp, 0.1);
-  const exportacao = ((f.comercioExterior + f.comercio + f.industria + f.tecnologia) / 4) * pibBase * 10;
-  const recursosNaturais = f.recursosNaturais * pibBase * 10;
+  const pibEscala = pibBase * 1000;
+  const exportacao = ((f.comercioExterior + f.comercio + f.industria + f.tecnologia) / 4) * pibBase * 4;
+  const recursosNaturais = f.recursosNaturais * pibBase * 3;
   const receita =
-    (f.nivelImposto * pibBase * 0.00001) +
-    (exportacao * 0.0005) +
-    (recursosNaturais * 0.0003);
+    (f.nivelImposto * pibEscala * 0.001) +
+    (exportacao * 0.0012) +
+    (recursosNaturais * 0.001);
   const gastoTotal =
     (f.gastoSaude + f.gastoEducacao + f.gastoSeguranca + f.gastoInfraestrutura +
-      f.gastoDefesa + f.gastoSocial + (100 - f.eficienciaEstado)) * 0.22;
+      f.gastoDefesa + f.gastoSocial + (100 - f.eficienciaEstado)) * 0.14
+    - (f.eficienciaEstado * 0.02);
   const saldo = receita - gastoTotal;
 
   let inflationDelta = 0;
   if (saldo < 0) {
-    inflationDelta += Math.abs(saldo) * 0.04;
+    inflationDelta += Math.abs(saldo) * 0.015 * mode.inflationFactor;
   }
   if (f.nivelImposto > 60) {
-    inflationDelta += 0.03;
+    inflationDelta += 0.01 * mode.inflationFactor;
   }
 
   let gdpDelta = 0;
@@ -593,19 +617,20 @@ function calculateEconomy() {
   gdpDelta += f.gastoEducacao * 0.00012;
   gdpDelta += f.tecnologia * 0.00016;
   gdpDelta += f.industria * 0.0001;
+  gdpDelta += Math.max(0, 55 - f.nivelImposto) * 0.00008;
   gdpDelta -= Math.max(0, f.nivelImposto - 45) * 0.00022;
   gdpDelta -= Math.max(0, state.stats.inflation - 12) * 0.0014;
 
   let unemploymentDelta = 0;
-  unemploymentDelta -= Math.max(0, gdpDelta) * 12;
+  unemploymentDelta -= Math.max(0, gdpDelta) * 9;
   unemploymentDelta += Math.max(0, state.stats.inflation - 15) * 0.02;
 
   let popularityDelta = 0;
-  popularityDelta += f.gastoSocial * 0.006;
-  popularityDelta += gdpDelta * 40;
-  popularityDelta -= Math.max(0, state.stats.inflation - 10) * 0.04;
-  popularityDelta -= Math.max(0, state.stats.unemployment - 12) * 0.05;
-  popularityDelta += (f.eficienciaEstado - 50) * 0.004;
+  popularityDelta += f.gastoSocial * 0.004 * mode.popularityFactor;
+  popularityDelta += gdpDelta * 28 * mode.popularityFactor;
+  popularityDelta -= Math.max(0, state.stats.inflation - 10) * 0.025 / mode.popularityFactor;
+  popularityDelta -= Math.max(0, state.stats.unemployment - 12) * 0.035 / mode.popularityFactor;
+  popularityDelta += (f.eficienciaEstado - 50) * 0.004 * mode.popularityFactor;
 
   return { receita, gastoTotal, saldo, exportacao, recursosNaturais, gdpDelta, inflationDelta, unemploymentDelta, popularityDelta };
 }
@@ -1136,8 +1161,17 @@ function renderDecisionsPanel() {
         <div class="catalog-list">${despesaCatalog}</div>
       </article>
     </div>
+    <article class="catalog-card">
+      <h4>Renunciar do cargo</h4>
+      <p>Encerrar o governo atual e escolher outra nação em crise.</p>
+      <button class="secondary-btn" id="resignButton">Renunciar</button>
+    </article>
     <div class="decision-grid">${cards || `<article class="feed-card neutral"><strong>Sem decisões urgentes</strong><p>O gabinete está momentaneamente estável, mas novas demandas surgirão.</p></article>`}</div>
   `;
+  const resignButton = elements.panelContent.querySelector("#resignButton");
+  if (resignButton) {
+    resignButton.addEventListener("click", confirmResignation);
+  }
   elements.panelContent.querySelectorAll(".decision-btn").forEach((button) => {
     button.addEventListener("click", () => answerDecision(button.dataset.id, button.dataset.option));
   });
@@ -1200,17 +1234,43 @@ function renderSettingsPanel() {
   elements.panelContent.innerHTML = `
     <div class="settings-grid">
       <article class="settings-card">
-        <span class="mini-label">Velocidade</span>
-        <strong>${velocidadeJogo}x</strong>
-        <span class="settings-line">Use os ícones do topo para acelerar ou pausar.</span>
+        <span class="mini-label">Início do jogo</span>
+        <strong>Pausado</strong>
+        <span class="settings-line">Toda nova partida começa pausada.</span>
       </article>
       <article class="settings-card">
         <span class="mini-label">País</span>
         <strong>${country().flag} ${country().name}</strong>
         <span class="settings-line">O cenário atual muda a tensão econômica e política.</span>
       </article>
+      <article class="settings-card">
+        <span class="mini-label">Modo de jogo</span>
+        <strong>${state.settings.gameMode}</strong>
+        <div class="mode-row">
+          <button class="mode-btn ${state.settings.gameMode === "iniciante" ? "active" : ""}" data-mode="iniciante">Iniciante</button>
+          <button class="mode-btn ${state.settings.gameMode === "casual" ? "active" : ""}" data-mode="casual">Casual</button>
+          <button class="mode-btn ${state.settings.gameMode === "veterano" ? "active" : ""}" data-mode="veterano">Veterano</button>
+        </div>
+      </article>
+      <article class="settings-card">
+        <span class="mini-label">Modo de som</span>
+        <strong>${state.settings.soundOn ? "Sim" : "Não"}</strong>
+        <div class="toggle-row">
+          <button class="toggle-btn ${state.settings.soundOn ? "active" : ""}" data-setting="sound" data-value="sim">Sim</button>
+          <button class="toggle-btn ${!state.settings.soundOn ? "active" : ""}" data-setting="sound" data-value="nao">Não</button>
+        </div>
+      </article>
+      <article class="settings-card">
+        <span class="mini-label">Tema</span>
+        <strong>${state.settings.theme === "dark" ? "Escuro" : "Claro"}</strong>
+        <div class="toggle-row">
+          <button class="toggle-btn ${state.settings.theme === "light" ? "active" : ""}" data-setting="theme" data-value="light">Claro</button>
+          <button class="toggle-btn ${state.settings.theme === "dark" ? "active" : ""}" data-setting="theme" data-value="dark">Escuro</button>
+        </div>
+      </article>
     </div>
   `;
+  bindSettingsControls();
 }
 
 function renderEndgame(reason, allowReelection = false) {
@@ -1291,6 +1351,76 @@ function renderCountrySelection() {
       document.body.classList.remove("reelection-mode");
       elements.endgameOverlay.classList.add("hidden");
       initSimulation();
+    });
+  });
+}
+
+function showConfirmDialog({ badge = "Confirmação", title, text, onYes, onNo }) {
+  elements.confirmBadge.textContent = badge;
+  elements.confirmTitle.textContent = title;
+  elements.confirmText.textContent = text;
+  elements.confirmActions.innerHTML = "";
+
+  const yesButton = document.createElement("button");
+  yesButton.className = "primary-btn";
+  yesButton.textContent = "Sim";
+  yesButton.addEventListener("click", () => {
+    elements.confirmOverlay.classList.add("hidden");
+    if (onYes) onYes();
+  });
+
+  const noButton = document.createElement("button");
+  noButton.className = "secondary-btn";
+  noButton.textContent = "Não";
+  noButton.addEventListener("click", () => {
+    elements.confirmOverlay.classList.add("hidden");
+    if (onNo) onNo();
+  });
+
+  elements.confirmActions.append(yesButton, noButton);
+  elements.confirmOverlay.classList.remove("hidden");
+}
+
+function confirmResignation() {
+  showConfirmDialog({
+    badge: "Renúncia",
+    title: "Renunciar do cargo?",
+    text: "Se confirmar, você deixa o país atual e escolhe outra nação para governar.",
+    onYes: () => {
+      jogoRodando = false;
+      elements.endgameOverlay.classList.remove("hidden");
+      renderCountrySelection();
+    },
+    onNo: () => {
+      jogoRodando = jogoRodando;
+    }
+  });
+}
+
+function bindSettingsControls() {
+  elements.panelContent.querySelectorAll(".mode-btn").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.settings.gameMode = button.dataset.mode;
+      playTone("click");
+      renderSettingsPanel();
+    });
+  });
+
+  elements.panelContent.querySelectorAll(".toggle-btn").forEach((button) => {
+    button.addEventListener("click", () => {
+      const setting = button.dataset.setting;
+      const value = button.dataset.value;
+      if (setting === "sound") {
+        state.settings.soundOn = value === "sim";
+        if (state.settings.soundOn) playTone("click");
+      }
+      if (setting === "theme") {
+        state.settings.theme = value;
+        document.body.classList.toggle("dark-theme", value === "dark");
+        playTone("click");
+      }
+      renderSettingsPanel();
+      renderAll();
     });
   });
 }
