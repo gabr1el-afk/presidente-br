@@ -1077,7 +1077,7 @@ body.dark-theme .slider-row input[type="range"]::-moz-range-thumb {
   transform: translateX(-50%);
   width: min(1120px, calc(100% - 24px));
   display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 8px;
   z-index: 30;
   box-shadow:
@@ -1115,6 +1115,10 @@ body.dark-theme .slider-row input[type="range"]::-moz-range-thumb {
 .dock-item small {
   font-size: 0.78rem;
   color: inherit;
+}
+
+.dock-item[data-panel="stats"] {
+  display: none;
 }
 
 .overlay {
@@ -1213,6 +1217,41 @@ body.dark-theme .slider-row input[type="range"]::-moz-range-thumb {
 .country-card {
   display: grid;
   gap: 10px;
+}
+
+.country-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.flag-badge {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  object-fit: cover;
+  box-shadow: 0 10px 24px rgba(15, 30, 22, 0.14);
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.diplomacy-grid {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.diplomacy-card,
+.country-select-card {
+  align-content: start;
+}
+
+.country-select-card .country-chip,
+.diplomacy-card .country-meta {
+  max-width: 180px;
+  text-align: center;
+}
+
+.diplomacy-btn[disabled] {
+  opacity: 0.72;
+  cursor: default;
 }
 
 @keyframes criticalPulse {
