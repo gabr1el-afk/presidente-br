@@ -100,25 +100,25 @@ function makeCountry(config) {
 }
 
 Object.assign(COUNTRIES, {
-  usa: makeCountry({ id: "usa", name: "Estados Unidos", flag: "🇺🇸", title: "Presidente dos Estados Unidos", difficultyName: "Potência sob Pressão", start: { gdp: 3.2, inflation: 5.1, popularity: 52, cash: 260, unemployment: 5.9, taxRate: 26 }, approval: { economia: 57, saude: 48, seguranca: 54, educacao: 46 }, diplomacyFocus: "tecnologia e defesa" }),
-  china: makeCountry({ id: "china", name: "China", flag: "🇨🇳", title: "Presidente da China", difficultyName: "Gigante Industrial", start: { gdp: 2.9, inflation: 4.8, popularity: 61, cash: 310, unemployment: 6.2, taxRate: 24 }, approval: { economia: 64, saude: 52, seguranca: 63, educacao: 58 }, diplomacyFocus: "industria e comercio" }),
-  germany: makeCountry({ id: "germany", name: "Alemanha", flag: "🇩🇪", title: "Chanceler da Alemanha", difficultyName: "Industria Estratégica", start: { gdp: 1.18, inflation: 6.2, popularity: 55, cash: 190, unemployment: 6.8, taxRate: 31 }, approval: { economia: 58, saude: 60, seguranca: 50, educacao: 57 }, diplomacyFocus: "energia e manufatura" }),
-  france: makeCountry({ id: "france", name: "França", flag: "🇫🇷", title: "Presidente da França", difficultyName: "Pressão Social", start: { gdp: 1.12, inflation: 7.2, popularity: 49, cash: 142, unemployment: 8.4, taxRate: 33 }, approval: { economia: 45, saude: 59, seguranca: 48, educacao: 56 }, diplomacyFocus: "defesa e infraestrutura" }),
-  uk: makeCountry({ id: "uk", name: "Reino Unido", flag: "🇬🇧", title: "Primeiro-Ministro do Reino Unido", difficultyName: "Mercado Nervoso", start: { gdp: 1.05, inflation: 8.1, popularity: 47, cash: 128, unemployment: 7.1, taxRate: 30 }, approval: { economia: 43, saude: 52, seguranca: 51, educacao: 50 }, diplomacyFocus: "financas e servicos" }),
-  japan: makeCountry({ id: "japan", name: "Japão", flag: "🇯🇵", title: "Primeiro-Ministro do Japão", difficultyName: "Crescimento Lento", start: { gdp: 1.26, inflation: 3.8, popularity: 58, cash: 220, unemployment: 4.9, taxRate: 27 }, approval: { economia: 56, saude: 61, seguranca: 53, educacao: 55 }, diplomacyFocus: "tecnologia e inovação" }),
-  india: makeCountry({ id: "india", name: "Índia", flag: "🇮🇳", title: "Primeiro-Ministro da Índia", difficultyName: "Expansão Acelerada", start: { gdp: 1.74, inflation: 9.2, popularity: 60, cash: 150, unemployment: 9.8, taxRate: 22 }, approval: { economia: 59, saude: 46, seguranca: 52, educacao: 49 }, diplomacyFocus: "mercado e tecnologia" }),
-  canada: makeCountry({ id: "canada", name: "Canadá", flag: "🇨🇦", title: "Primeiro-Ministro do Canadá", difficultyName: "Estabilidade Fria", start: { gdp: 0.98, inflation: 4.7, popularity: 57, cash: 176, unemployment: 6.1, taxRate: 29 }, approval: { economia: 58, saude: 63, seguranca: 54, educacao: 60 }, diplomacyFocus: "energia e comercio" }),
-  mexico: makeCountry({ id: "mexico", name: "México", flag: "🇲🇽", title: "Presidente do México", difficultyName: "Cadeias Produtivas", start: { gdp: 0.93, inflation: 8.5, popularity: 51, cash: 96, unemployment: 8.8, taxRate: 25 }, approval: { economia: 49, saude: 47, seguranca: 39, educacao: 45 }, diplomacyFocus: "industria e exportação" }),
-  chile: makeCountry({ id: "chile", name: "Chile", flag: "🇨🇱", title: "Presidente do Chile", difficultyName: "Ajuste Institucional", start: { gdp: 0.62, inflation: 9.1, popularity: 48, cash: 88, unemployment: 9.1, taxRate: 27 }, approval: { economia: 47, saude: 51, seguranca: 44, educacao: 50 }, diplomacyFocus: "mineracao e comercio" }),
-  colombia: makeCountry({ id: "colombia", name: "Colômbia", flag: "🇨🇴", title: "Presidente da Colômbia", difficultyName: "Segurança Sensível", start: { gdp: 0.69, inflation: 10.8, popularity: 45, cash: 72, unemployment: 11.3, taxRate: 26 }, approval: { economia: 41, saude: 46, seguranca: 34, educacao: 43 }, diplomacyFocus: "seguranca e energia" }),
-  portugal: makeCountry({ id: "portugal", name: "Portugal", flag: "🇵🇹", title: "Primeiro-Ministro de Portugal", difficultyName: "Recuperação Moderada", start: { gdp: 0.54, inflation: 5.9, popularity: 53, cash: 92, unemployment: 7.8, taxRate: 29 }, approval: { economia: 52, saude: 58, seguranca: 49, educacao: 54 }, diplomacyFocus: "turismo e servicos" }),
-  spain: makeCountry({ id: "spain", name: "Espanha", flag: "🇪🇸", title: "Presidente da Espanha", difficultyName: "Coalizão Delicada", start: { gdp: 0.96, inflation: 7.4, popularity: 50, cash: 134, unemployment: 10.9, taxRate: 31 }, approval: { economia: 46, saude: 56, seguranca: 45, educacao: 53 }, diplomacyFocus: "infraestrutura e turismo" }),
-  italy: makeCountry({ id: "italy", name: "Itália", flag: "🇮🇹", title: "Primeiro-Ministro da Itália", difficultyName: "Divida Persistente", start: { gdp: 1.01, inflation: 8.2, popularity: 49, cash: 118, unemployment: 9.6, taxRate: 32 }, approval: { economia: 44, saude: 55, seguranca: 47, educacao: 51 }, diplomacyFocus: "industria e crédito" }),
-  australia: makeCountry({ id: "australia", name: "Austrália", flag: "🇦🇺", title: "Primeiro-Ministro da Austrália", difficultyName: "Recursos Estratégicos", start: { gdp: 0.89, inflation: 5.6, popularity: 56, cash: 166, unemployment: 5.4, taxRate: 24 }, approval: { economia: 57, saude: 59, seguranca: 52, educacao: 55 }, diplomacyFocus: "mineracao e tecnologia" }),
-  southkorea: makeCountry({ id: "southkorea", name: "Coreia do Sul", flag: "🇰🇷", title: "Presidente da Coreia do Sul", difficultyName: "Tecnologia de Ponta", start: { gdp: 1.08, inflation: 4.4, popularity: 54, cash: 182, unemployment: 5.8, taxRate: 25 }, approval: { economia: 60, saude: 57, seguranca: 58, educacao: 61 }, diplomacyFocus: "chips e inovação" }),
-  indonesia: makeCountry({ id: "indonesia", name: "Indonésia", flag: "🇮🇩", title: "Presidente da Indonésia", difficultyName: "Expansão Logística", start: { gdp: 0.88, inflation: 8.7, popularity: 52, cash: 94, unemployment: 9.4, taxRate: 23 }, approval: { economia: 51, saude: 45, seguranca: 46, educacao: 44 }, diplomacyFocus: "logistica e energia" }),
-  turkey: makeCountry({ id: "turkey", name: "Turquia", flag: "🇹🇷", title: "Presidente da Turquia", difficultyName: "Volatilidade Monetária", start: { gdp: 0.91, inflation: 17.3, popularity: 43, cash: 58, unemployment: 12.1, taxRate: 28 }, approval: { economia: 34, saude: 42, seguranca: 49, educacao: 40 }, diplomacyFocus: "comercio e defesa" }),
-  nigeria: makeCountry({ id: "nigeria", name: "Nigéria", flag: "🇳🇬", title: "Presidente da Nigéria", difficultyName: "Pressão Social e Energia", start: { gdp: 0.72, inflation: 14.6, popularity: 44, cash: 66, unemployment: 15.2, taxRate: 24 }, approval: { economia: 36, saude: 38, seguranca: 33, educacao: 37 }, diplomacyFocus: "energia e infraestrutura" })
+  usa: makeCountry({ id: "usa", name: "Estados Unidos", flag: "🇺🇸", title: "Presidente dos Estados Unidos", difficultyName: "Potência sob Pressão", start: { gdp: 3.2, inflation: 5.1, popularity: 52, cash: 260, unemployment: 5.9, taxRate: 26 }, approval: { economia: 57, saude: 48, seguranca: 54, educacao: 46 }, diplomacyType: "defesa", diplomacyFocus: "escudo militar e inteligência" }),
+  china: makeCountry({ id: "china", name: "China", flag: "🇨🇳", title: "Presidente da China", difficultyName: "Gigante Industrial", start: { gdp: 2.9, inflation: 4.8, popularity: 61, cash: 310, unemployment: 6.2, taxRate: 24 }, approval: { economia: 64, saude: 52, seguranca: 63, educacao: 58 }, diplomacyType: "cadeias", diplomacyFocus: "cadeias industriais e escala fabril" }),
+  germany: makeCountry({ id: "germany", name: "Alemanha", flag: "🇩🇪", title: "Chanceler da Alemanha", difficultyName: "Industria Estratégica", start: { gdp: 1.18, inflation: 6.2, popularity: 55, cash: 190, unemployment: 6.8, taxRate: 31 }, approval: { economia: 58, saude: 60, seguranca: 50, educacao: 57 }, diplomacyType: "manufatura", diplomacyFocus: "maquinas, química e manufatura premium" }),
+  france: makeCountry({ id: "france", name: "França", flag: "🇫🇷", title: "Presidente da França", difficultyName: "Pressão Social", start: { gdp: 1.12, inflation: 7.2, popularity: 49, cash: 142, unemployment: 8.4, taxRate: 33 }, approval: { economia: 45, saude: 59, seguranca: 48, educacao: 56 }, diplomacyType: "infraestrutura", diplomacyFocus: "mobilidade urbana e obras de grande porte" }),
+  uk: makeCountry({ id: "uk", name: "Reino Unido", flag: "🇬🇧", title: "Primeiro-Ministro do Reino Unido", difficultyName: "Mercado Nervoso", start: { gdp: 1.05, inflation: 8.1, popularity: 47, cash: 128, unemployment: 7.1, taxRate: 30 }, approval: { economia: 43, saude: 52, seguranca: 51, educacao: 50 }, diplomacyType: "financas", diplomacyFocus: "serviços financeiros e capital global" }),
+  japan: makeCountry({ id: "japan", name: "Japão", flag: "🇯🇵", title: "Primeiro-Ministro do Japão", difficultyName: "Crescimento Lento", start: { gdp: 1.26, inflation: 3.8, popularity: 58, cash: 220, unemployment: 4.9, taxRate: 27 }, approval: { economia: 56, saude: 61, seguranca: 53, educacao: 55 }, diplomacyType: "inovacao", diplomacyFocus: "robotica, automação e precisão industrial" }),
+  india: makeCountry({ id: "india", name: "Índia", flag: "🇮🇳", title: "Primeiro-Ministro da Índia", difficultyName: "Expansão Acelerada", start: { gdp: 1.74, inflation: 9.2, popularity: 60, cash: 150, unemployment: 9.8, taxRate: 22 }, approval: { economia: 59, saude: 46, seguranca: 52, educacao: 49 }, diplomacyType: "mercado", diplomacyFocus: "mercado consumidor e serviços digitais" }),
+  canada: makeCountry({ id: "canada", name: "Canadá", flag: "🇨🇦", title: "Primeiro-Ministro do Canadá", difficultyName: "Estabilidade Fria", start: { gdp: 0.98, inflation: 4.7, popularity: 57, cash: 176, unemployment: 6.1, taxRate: 29 }, approval: { economia: 58, saude: 63, seguranca: 54, educacao: 60 }, diplomacyType: "energia", diplomacyFocus: "energia limpa, gás e integração continental" }),
+  mexico: makeCountry({ id: "mexico", name: "México", flag: "🇲🇽", title: "Presidente do México", difficultyName: "Cadeias Produtivas", start: { gdp: 0.93, inflation: 8.5, popularity: 51, cash: 96, unemployment: 8.8, taxRate: 25 }, approval: { economia: 49, saude: 47, seguranca: 39, educacao: 45 }, diplomacyType: "exportacao", diplomacyFocus: "fábricas, montadoras e exportação rápida" }),
+  chile: makeCountry({ id: "chile", name: "Chile", flag: "🇨🇱", title: "Presidente do Chile", difficultyName: "Ajuste Institucional", start: { gdp: 0.62, inflation: 9.1, popularity: 48, cash: 88, unemployment: 9.1, taxRate: 27 }, approval: { economia: 47, saude: 51, seguranca: 44, educacao: 50 }, diplomacyType: "mineracao", diplomacyFocus: "cobre, lítio e mineração estratégica" }),
+  colombia: makeCountry({ id: "colombia", name: "Colômbia", flag: "🇨🇴", title: "Presidente da Colômbia", difficultyName: "Segurança Sensível", start: { gdp: 0.69, inflation: 10.8, popularity: 45, cash: 72, unemployment: 11.3, taxRate: 26 }, approval: { economia: 41, saude: 46, seguranca: 34, educacao: 43 }, diplomacyType: "seguranca", diplomacyFocus: "fronteiras, combate ao crime e inteligência" }),
+  portugal: makeCountry({ id: "portugal", name: "Portugal", flag: "🇵🇹", title: "Primeiro-Ministro de Portugal", difficultyName: "Recuperação Moderada", start: { gdp: 0.54, inflation: 5.9, popularity: 53, cash: 92, unemployment: 7.8, taxRate: 29 }, approval: { economia: 52, saude: 58, seguranca: 49, educacao: 54 }, diplomacyType: "turismo", diplomacyFocus: "turismo premium e economia criativa" }),
+  spain: makeCountry({ id: "spain", name: "Espanha", flag: "🇪🇸", title: "Presidente da Espanha", difficultyName: "Coalizão Delicada", start: { gdp: 0.96, inflation: 7.4, popularity: 50, cash: 134, unemployment: 10.9, taxRate: 31 }, approval: { economia: 46, saude: 56, seguranca: 45, educacao: 53 }, diplomacyType: "transporte", diplomacyFocus: "trens, portos e logística europeia" }),
+  italy: makeCountry({ id: "italy", name: "Itália", flag: "🇮🇹", title: "Primeiro-Ministro da Itália", difficultyName: "Divida Persistente", start: { gdp: 1.01, inflation: 8.2, popularity: 49, cash: 118, unemployment: 9.6, taxRate: 32 }, approval: { economia: 44, saude: 55, seguranca: 47, educacao: 51 }, diplomacyType: "credito", diplomacyFocus: "crédito produtivo e reindustrialização" }),
+  australia: makeCountry({ id: "australia", name: "Austrália", flag: "🇦🇺", title: "Primeiro-Ministro da Austrália", difficultyName: "Recursos Estratégicos", start: { gdp: 0.89, inflation: 5.6, popularity: 56, cash: 166, unemployment: 5.4, taxRate: 24 }, approval: { economia: 57, saude: 59, seguranca: 52, educacao: 55 }, diplomacyType: "commodities", diplomacyFocus: "commodities, metais raros e rotas marítimas" }),
+  southkorea: makeCountry({ id: "southkorea", name: "Coreia do Sul", flag: "🇰🇷", title: "Presidente da Coreia do Sul", difficultyName: "Tecnologia de Ponta", start: { gdp: 1.08, inflation: 4.4, popularity: 54, cash: 182, unemployment: 5.8, taxRate: 25 }, approval: { economia: 60, saude: 57, seguranca: 58, educacao: 61 }, diplomacyType: "chips", diplomacyFocus: "semicondutores, telas e tecnologia avançada" }),
+  indonesia: makeCountry({ id: "indonesia", name: "Indonésia", flag: "🇮🇩", title: "Presidente da Indonésia", difficultyName: "Expansão Logística", start: { gdp: 0.88, inflation: 8.7, popularity: 52, cash: 94, unemployment: 9.4, taxRate: 23 }, approval: { economia: 51, saude: 45, seguranca: 46, educacao: 44 }, diplomacyType: "portos", diplomacyFocus: "portos, ilhas e corredores logísticos" }),
+  turkey: makeCountry({ id: "turkey", name: "Turquia", flag: "🇹🇷", title: "Presidente da Turquia", difficultyName: "Volatilidade Monetária", start: { gdp: 0.91, inflation: 17.3, popularity: 43, cash: 58, unemployment: 12.1, taxRate: 28 }, approval: { economia: 34, saude: 42, seguranca: 49, educacao: 40 }, diplomacyType: "corredores", diplomacyFocus: "corredores comerciais e indústria de defesa" }),
+  nigeria: makeCountry({ id: "nigeria", name: "Nigéria", flag: "🇳🇬", title: "Presidente da Nigéria", difficultyName: "Pressão Social e Energia", start: { gdp: 0.72, inflation: 14.6, popularity: 44, cash: 66, unemployment: 15.2, taxRate: 24 }, approval: { economia: 36, saude: 38, seguranca: 33, educacao: 37 }, diplomacyType: "petroleo", diplomacyFocus: "petróleo, gás e mercado africano emergente" })
 });
 
 Object.values(COUNTRIES).forEach((item) => {
@@ -2348,7 +2348,28 @@ function relationStatusFor(countryId) {
 }
 
 function relationAgreementLabel(countryItem) {
-  return `Acordo de ${countryItem.diplomacyFocus || "cooperação"}`;
+  const labels = {
+    defesa: "Pacto de Defesa",
+    cadeias: "Acordo de Cadeias Produtivas",
+    manufatura: "Parceria Industrial",
+    infraestrutura: "Tratado de Infraestrutura",
+    financas: "Acordo Financeiro",
+    inovacao: "Pacto de Inovação",
+    mercado: "Acordo de Mercado",
+    energia: "Parceria Energética",
+    exportacao: "Acordo de Exportação",
+    mineracao: "Tratado Mineral",
+    seguranca: "Cooperação em Segurança",
+    turismo: "Aliança de Turismo",
+    transporte: "Acordo Logístico",
+    credito: "Linha de Crédito Estratégica",
+    commodities: "Pacto de Commodities",
+    chips: "Acordo de Semicondutores",
+    portos: "Parceria Portuária",
+    corredores: "Acordo de Corredores Comerciais",
+    petroleo: "Acordo de Petróleo e Gás"
+  };
+  return labels[countryItem.diplomacyType] || `Acordo de ${countryItem.diplomacyFocus || "cooperação"}`;
 }
 
 function signDiplomaticDeal(countryId) {
@@ -2366,17 +2387,20 @@ function signDiplomaticDeal(countryId) {
   state.stats.popularity += 0.8;
   state.approval.economia += 1.4;
 
-  if ((partner.diplomacyFocus || "").includes("tecnologia")) {
+  if (["inovacao", "chips"].includes(partner.diplomacyType) || (partner.diplomacyFocus || "").includes("tecnologia")) {
     state.finance.tecnologia = clamp(state.finance.tecnologia + 3, 0, 100);
   }
-  if ((partner.diplomacyFocus || "").includes("energia")) {
+  if (["energia", "petroleo", "commodities"].includes(partner.diplomacyType) || (partner.diplomacyFocus || "").includes("energia")) {
     state.finance.recursosNaturais = clamp(state.finance.recursosNaturais + 2, 0, 100);
   }
-  if ((partner.diplomacyFocus || "").includes("comerc")) {
+  if (["mercado", "exportacao", "corredores", "cadeias"].includes(partner.diplomacyType) || (partner.diplomacyFocus || "").includes("comerc")) {
     state.finance.comercioExterior = clamp(state.finance.comercioExterior + 4, 0, 100);
   }
-  if ((partner.diplomacyFocus || "").includes("infra")) {
+  if (["infraestrutura", "transporte", "portos"].includes(partner.diplomacyType) || (partner.diplomacyFocus || "").includes("infra")) {
     state.finance.gastoInfraestrutura = clamp(state.finance.gastoInfraestrutura + 2, 0, 100);
+  }
+  if (["manufatura", "credito"].includes(partner.diplomacyType)) {
+    state.finance.industria = clamp(state.finance.industria + 3, 0, 100);
   }
 
   normalizeStats();
