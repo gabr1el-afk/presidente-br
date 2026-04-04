@@ -309,12 +309,14 @@ const state = {
   queuedDecisions: [],
   pendingEffects: [],
   news: [],
+  advisorNotes: [],
   events: [],
   audioContext: null,
   decisionClockMs: 0,
   lastDecisionHeartbeat: Date.now(),
   nextDecisionTick: 1800,
   nextNewsTick: 1200,
+  nextAdvisorTick: 150,
   nextCrisisTick: 1800,
   negativeCashTicks: 0,
   finance: {
@@ -431,12 +433,14 @@ function initSimulation() {
   state.queuedDecisions = [];
   state.pendingEffects = [];
   state.news = [];
+  state.advisorNotes = [];
   state.events = [];
   state.audioContext = null;
   state.decisionClockMs = 0;
   state.lastDecisionHeartbeat = Date.now();
   state.nextDecisionTick = 1800;
-  state.nextNewsTick = 1200;
+  state.nextNewsTick = 100;
+  state.nextAdvisorTick = 150;
   state.nextCrisisTick = 1800;
   state.negativeCashTicks = 0;
   state.finance = {
@@ -463,6 +467,7 @@ function initSimulation() {
   setActivePanel("economy");
   pushNews("Monitor", "Novo gabinete assume", "O país aguarda sua primeira sequência de decisões.");
   pushEvent("Início de mandato", "A equipe de governo toma posse sob observação constante.");
+  pushAdvisorNote("Briefing inicial", "O governo comeca pausado. Assim que entrar em Play, acompanhe inflacao, caixa e a primeira leva de decisoes.", "stable");
   updateHeadline();
   renderAll();
 }
@@ -498,7 +503,18 @@ function runLoop() {
 
   if (tickAtual >= state.nextNewsTick) {
     injectIndicatorNews();
-    state.nextNewsTick = tickAtual + 1350;
+    state.nextNewsTick = tickAtual + 100;
+    if (state.currentPanel === "news") {
+      renderNewsPanel();
+    }
+  }
+
+  if (tickAtual >= state.nextAdvisorTick) {
+    issueAdvisorBriefing();
+    state.nextAdvisorTick = tickAtual + 150;
+    if (state.currentPanel === "advisor") {
+      renderAdvisorPanel();
+    }
   }
 
   if (tickAtual >= state.nextCrisisTick) {
@@ -734,6 +750,105 @@ function decisionSeverity(effect) {
   return averageApproval() > 60 ? "light-blue" : "light-green";
 }
 
+function decisionClassification(decision) {
+  const stats = state.stats;
+  const effectsApprove = decision.options.approve.immediate || {};
+  const effectsReject = decision.options.reject.immediate || {};
+  const remaining = Math.max(0, decision.deadline - tickAtual);
+
+  const context = {
+    inflationCritical: stats.inflation >= 18,
+    cashCritical: stats.cash <= 20,
+    popularityCritical: stats.popularity <= 32,
+    unemploymentCritical: stats.unemployment >= 14,
+    growthWeak: stats.gdp <= country().start.gdp,
+    highPressure: crisisPressure() >= 3,
+    expiring: remaining <= 1400
+  };
+
+  let category = "Equilíbrio";
+  let priority = "média";
+  let recommendation = "approve";
+  let reason = "A medida abre alguma margem estratégica para o governo.";
+
+  if ((effectsApprove.inflation || 0) < 0 || (effectsReject.inflation || 0) < 0 || decision.tags.includes("Inflação")) {
+    category = "Controle de preços";
+    if (context.inflationCritical) {
+      priority = "crítica";
+      recommendation = (effectsApprove.inflation || 0) <= (effectsReject.inflation || 0) ? "approve" : "reject";
+      reason = "A inflação virou risco central e precisa ser atacada antes de corroer mais apoio.";
+    } else {
+      priority = "alta";
+      recommendation = (effectsApprove.inflation || 0) < (effectsReject.inflation || 0) ? "approve" : "reject";
+      reason = "Segurar preços agora evita pressão acumulada sobre aprovação e consumo.";
+    }
+  } else if ((effectsApprove.cash || 0) > 0 || (effectsReject.cash || 0) > 0 || decision.tags.includes("Economia")) {
+    category = "Fiscal e crescimento";
+    if (context.cashCritical) {
+      priority = "crítica";
+      recommendation = (effectsApprove.cash || 0) >= (effectsReject.cash || 0) ? "approve" : "reject";
+      reason = "O caixa está apertado e a prioridade é preservar fôlego fiscal imediato.";
+    } else if (context.growthWeak || context.unemploymentCritical) {
+      priority = "alta";
+      recommendation = (effectsApprove.gdp || 0) >= (effectsReject.gdp || 0) ? "approve" : "reject";
+      reason = "Com crescimento fraco, a recomendação favorece a opção que reativa PIB e emprego.";
+    } else {
+      priority = "média";
+      recommendation = (effectsApprove.cash || 0) + (effectsApprove.gdp || 0) >= (effectsReject.cash || 0) + (effectsReject.gdp || 0) ? "approve" : "reject";
+      reason = "A leitura atual busca equilíbrio entre arrecadação e expansão econômica.";
+    }
+  } else if ((effectsApprove.popularity || 0) > 0 || (effectsReject.popularity || 0) > 0 || decision.tags.includes("Popularidade") || decision.tags.includes("Social")) {
+    category = "Estabilidade social";
+    if (context.popularityCritical) {
+      priority = "crítica";
+      recommendation = (effectsApprove.popularity || 0) >= (effectsReject.popularity || 0) ? "approve" : "reject";
+      reason = "A base política está em risco e a prioridade é recuperar legitimidade nacional.";
+    } else {
+      priority = context.highPressure ? "alta" : "média";
+      recommendation = (effectsApprove.popularity || 0) >= (effectsReject.popularity || 0) ? "approve" : "reject";
+      reason = "A tensão social pede a resposta com melhor retorno político de curto prazo.";
+    }
+  } else if (decision.tags.includes("Segurança")) {
+    category = "Ordem pública";
+    priority = context.popularityCritical ? "alta" : "média";
+    recommendation = (effectsApprove.popularity || 0) >= (effectsReject.popularity || 0) ? "approve" : "reject";
+    reason = "A percepção de autoridade pesa diretamente sobre confiança e governabilidade.";
+  }
+
+  if (context.expiring && priority !== "crítica") {
+    priority = priority === "alta" ? "crítica" : "alta";
+    reason = `O prazo está acabando. ${reason}`;
+  }
+
+  return { category, priority, recommendation, reason };
+}
+
+function decisionMetaTone(priority) {
+  if (priority === "crítica") return "critical";
+  if (priority === "alta") return "warning";
+  return "stable";
+}
+
+function recommendationLabel(option) {
+  return option === "approve" ? "Recomendado: Aprovar" : "Recomendado: Recusar";
+}
+
+function topDecisionRecommendation() {
+  if (!state.activeDecisions.length) {
+    return null;
+  }
+  const priorityWeight = { "crítica": 3, "alta": 2, "média": 1 };
+  return [...state.activeDecisions]
+    .map((decision) => ({ decision, analysis: decisionClassification(decision) }))
+    .sort((a, b) => {
+      const priorityGap = (priorityWeight[b.analysis.priority] || 0) - (priorityWeight[a.analysis.priority] || 0);
+      if (priorityGap !== 0) {
+        return priorityGap;
+      }
+      return (a.decision.deadline - tickAtual) - (b.decision.deadline - tickAtual);
+    })[0];
+}
+
 function animateDecisionFeedback(decisionId, severity) {
   const card = elements.panelContent.querySelector(`[data-card-id="${decisionId}"]`) || elements.panelContent.querySelector(`.decision-card`);
   if (!card) {
@@ -834,6 +949,7 @@ function applyDecisionEffect(effect, title) {
   normalizeStats();
   pushEvent(title, effect.impact, effect.mood);
   pushNews("Governo", title, effect.impact);
+  issueAdvisorBriefing("decision", title);
   updateHeadline(title, effect.impact);
 }
 
@@ -930,6 +1046,11 @@ function injectIndicatorNews() {
 function pushNews(type, title, body, priority = "neutral") {
   state.news.unshift({ type, title, body, priority, tick: tickAtual });
   state.news = state.news.slice(0, 10);
+}
+
+function pushAdvisorNote(title, body, tone = "stable") {
+  state.advisorNotes.unshift({ title, body, tone, tick: tickAtual });
+  state.advisorNotes = state.advisorNotes.slice(0, 8);
 }
 
 function pushEvent(title, body, mood = "neutral") {
@@ -1218,13 +1339,21 @@ function renderDecisionsPanel() {
 
   const cards = state.activeDecisions.map((decision) => {
     const remaining = Math.max(0, decision.deadline - tickAtual);
+    const analysis = decisionClassification(decision);
+    const tone = decisionMetaTone(analysis.priority);
     return `
       <article class="decision-card ${remaining < 1400 ? "expiring" : ""}" data-card-id="${decision.id}">
         <div class="decision-top">
           <strong>${decision.title}</strong>
           <span class="panel-chip" data-decision-remaining="${decision.id}">${remaining} ticks</span>
         </div>
+        <div class="decision-meta-row">
+          <span class="decision-meta-chip ${tone}">${analysis.category}</span>
+          <span class="decision-meta-chip ${tone}">${analysis.priority}</span>
+          <span class="decision-meta-chip recommended">${recommendationLabel(analysis.recommendation)}</span>
+        </div>
         <p>${decision.body}</p>
+        <p class="decision-reason">${analysis.reason}</p>
         <div class="decision-actions">
           <button class="decision-btn primary" data-id="${decision.id}" data-option="approve">${decision.options.approve.label}</button>
           <button class="decision-btn secondary" data-id="${decision.id}" data-option="reject">${decision.options.reject.label}</button>
@@ -1617,6 +1746,336 @@ function bindEconomyControls() {
       }
     });
   });
+}
+
+function renderDecisionsPanel() {
+  setPanelHeader("Decisões", "Gabinete", `${state.activeDecisions.length} abertas`);
+  const receitaCatalog = [
+    "Impostos",
+    "Comércio exterior",
+    "Recursos naturais",
+    "Comércio",
+    "Indústria",
+    "Tecnologia"
+  ].map((label) => `<div class="catalog-item"><span>${label}</span><strong>${Math.round(state.finance[keyForLabel(label)] || 0)}</strong></div>`).join("");
+  const despesaCatalog = [
+    "Saúde",
+    "Educação",
+    "Segurança",
+    "Infraestrutura",
+    "Defesa",
+    "Programas sociais",
+    "Eficiência do estado"
+  ].map((label) => `<div class="catalog-item"><span>${label}</span><strong>${Math.round(state.finance[keyForLabel(label)] || 0)}</strong></div>`).join("");
+
+  const cards = state.activeDecisions.map((decision) => {
+    const remaining = Math.max(0, decision.deadline - tickAtual);
+    const analysis = decisionClassification(decision);
+    const tone = decisionMetaTone(analysis.priority);
+    return `
+      <article class="decision-card ${remaining < 1400 ? "expiring" : ""}" data-card-id="${decision.id}">
+        <div class="decision-top">
+          <strong>${decision.title}</strong>
+          <span class="panel-chip" data-decision-remaining="${decision.id}">${remaining} ticks</span>
+        </div>
+        <div class="decision-meta-row">
+          <span class="decision-meta-chip ${tone}">${analysis.category}</span>
+          <span class="decision-meta-chip ${tone}">${analysis.priority}</span>
+          <span class="decision-meta-chip recommended">${recommendationLabel(analysis.recommendation)}</span>
+        </div>
+        <p>${decision.body}</p>
+        <p class="decision-reason">${analysis.reason}</p>
+        <div class="decision-actions">
+          <button class="decision-btn primary" data-id="${decision.id}" data-option="approve">${decision.options.approve.label}</button>
+          <button class="decision-btn secondary" data-id="${decision.id}" data-option="reject">${decision.options.reject.label}</button>
+        </div>
+      </article>
+    `;
+  }).join("");
+
+  elements.panelContent.innerHTML = `
+    <div class="decision-columns">
+      <article class="catalog-card">
+        <h4>Receitas</h4>
+        <div class="catalog-list">${receitaCatalog}</div>
+      </article>
+      <article class="catalog-card">
+        <h4>Despesas</h4>
+        <div class="catalog-list">${despesaCatalog}</div>
+      </article>
+    </div>
+    <article class="catalog-card">
+      <h4>Renunciar do cargo</h4>
+      <p>Encerrar o governo atual e escolher outra nação em crise.</p>
+      <button class="secondary-btn" id="resignButton">Renunciar</button>
+    </article>
+    <div class="decision-grid">${cards || `<article class="feed-card neutral"><strong>Sem decisões urgentes</strong><p>O gabinete está momentaneamente estável, mas novas demandas surgirão.</p></article>`}</div>
+  `;
+
+  const resignButton = elements.panelContent.querySelector("#resignButton");
+  if (resignButton) {
+    resignButton.addEventListener("click", confirmResignation);
+  }
+  elements.panelContent.querySelectorAll(".decision-btn").forEach((button) => {
+    button.addEventListener("click", () => answerDecision(button.dataset.id, button.dataset.option));
+  });
+}
+
+function renderAdvisorPanel() {
+  setPanelHeader("Conselheiro", "Centro Estratégico", "IA interna");
+  const recommended = topDecisionRecommendation();
+  const advice = recommended
+    ? `${recommended.analysis.reason} ${recommendationLabel(recommended.analysis.recommendation)} em "${recommended.decision.title}".`
+    : crisisPressure() > 2
+      ? "As crises estão acumulando camadas. Responda primeiro o que atinge inflação e caixa."
+      : state.activeDecisions.length > 1
+        ? "Há mais de uma frente aberta. Priorize a que está mais perto do prazo."
+        : "Sua janela de controle ainda existe. Use decisões para ajustar setores específicos.";
+  const focusLine = recommended
+    ? `<div class="advisor-focus"><span class="decision-meta-chip ${decisionMetaTone(recommended.analysis.priority)}">${recommended.analysis.priority}</span><strong>${recommended.decision.title}</strong></div>`
+    : `<div class="advisor-focus"><span class="decision-meta-chip stable">janela estável</span><strong>Sem decisão urgente no momento</strong></div>`;
+
+  elements.panelContent.innerHTML = `
+    <article class="advisor-card">
+      <span class="mini-label">Helena Duarte</span>
+      <strong>Leitura do gabinete</strong>
+      ${focusLine}
+      <p>${advice}</p>
+    </article>
+  `;
+}
+
+const SOCIAL_PROFILES = [
+  { name: "Clara Nunes", handle: "@clarapolitica", stance: "pro-governo", badge: "base" },
+  { name: "Mateus Lima", handle: "@mercadomateus", stance: "mercado", badge: "mercado" },
+  { name: "Ana Costa", handle: "@anacivica", stance: "povo", badge: "rua" },
+  { name: "Leo Barros", handle: "@leobarros", stance: "oposicao", badge: "oposicao" },
+  { name: "Julia Ferraz", handle: "@juliaopina", stance: "jornalismo", badge: "midia" },
+  { name: "Rafa Mendes", handle: "@rafamendes", stance: "povo", badge: "debate" }
+];
+
+function fiscalOutlook() {
+  const economy = calculateEconomy();
+  if (economy.saldo > 20) {
+    return "Projecao: o caixa deve seguir respirando se o ritmo atual for mantido.";
+  }
+  if (economy.saldo > 0) {
+    return "Projecao: ha superavit, mas qualquer choque relevante pode apertar o governo.";
+  }
+  if (economy.saldo > -12) {
+    return "Projecao: o deficit ainda e reversivel, porem ja pressiona inflacao e confianca.";
+  }
+  return "Projecao: sem correcao fiscal, a tendencia e de crise mais frequente e desgaste acelerado.";
+}
+
+function governmentAdviceItems() {
+  const items = [];
+  const economy = calculateEconomy();
+
+  if (state.stats.inflation >= 18) {
+    items.push("Prioridade maxima: atacar inflacao. Sem isso, popularidade e consumo continuam caindo.");
+  }
+  if (state.stats.cash <= 20 || economy.saldo < 0) {
+    items.push("Proteja o caixa. Elevar despesas agora sem compensacao aumenta a chance de colapso fiscal.");
+  }
+  if (state.stats.popularity <= 35) {
+    items.push("A base politica esta fragil. Decisoes com ganho social e percepcao publica ficaram mais valiosas.");
+  }
+  if (state.stats.unemployment >= 14) {
+    items.push("O desemprego ja virou crise de humor nacional. Crescimento e investimento precisam ganhar peso.");
+  }
+  if (state.finance.gastoEducacao < 40) {
+    items.push("Educacao baixa reduz o crescimento futuro. Vale reforcar isso antes que a economia estanque.");
+  }
+  const recommended = topDecisionRecommendation();
+  if (recommended) {
+    items.push(`${recommendationLabel(recommended.analysis.recommendation)} em "${recommended.decision.title}" porque ${recommended.analysis.reason.toLowerCase()}`);
+  }
+  if (!items.length) {
+    items.push("O governo esta relativamente estavel. Use essa janela para fortalecer caixa, emprego e aprovacao setorial.");
+  }
+  return items.slice(0, 4);
+}
+
+function issueAdvisorBriefing(source = "cycle", customTitle = "") {
+  const items = governmentAdviceItems();
+  const primary = items[0] || "O governo segue estavel, mas precisa manter margem de manobra.";
+  const title = customTitle || (source === "decision" ? "Conselho apos decisao" : "Briefing do conselheiro");
+  let tone = "stable";
+  if (state.stats.inflation >= 18 || state.stats.cash < 0 || state.stats.popularity < 30) {
+    tone = "critical";
+  } else if (crisisPressure() >= 2 || state.activeDecisions.length > 1) {
+    tone = "warning";
+  }
+  pushAdvisorNote(title, primary, tone);
+}
+
+function secondaryOutletName(index) {
+  const outlets = ["JN Marca Economia", "Capital 24", "Radar Fiscal", "Voz Nacional", "Painel Central"];
+  return outlets[index % outlets.length];
+}
+
+function socialCommentary(profile, index) {
+  const latest = state.news[index % Math.max(state.news.length, 1)] || { title: "governo" };
+  const openDecision = state.activeDecisions[0];
+
+  if (profile.stance === "mercado") {
+    if (state.stats.inflation > 18) {
+      return `O mercado vai abrir pressionando. "${latest.title}" reforca leitura de risco e perda de ancora nos precos.`;
+    }
+    if (state.stats.cash < 20) {
+      return `O caixa esta curto demais. Se o governo nao sinalizar ajuste, "${latest.title}" vai pesar nos ativos.`;
+    }
+    if (state.stats.gdp > country().start.gdp + 0.15) {
+      return `Tem revisao positiva vindo ai. "${latest.title}" combina com um ciclo mais forte de crescimento.`;
+    }
+    return `O mercado ainda esta em compasso de espera. "${latest.title}" ajuda a medir se o governo tem rumo fiscal.`;
+  }
+
+  if (profile.stance === "oposicao") {
+    if (state.stats.popularity < 35) {
+      return `A popularidade caiu e "${latest.title}" so amplia o desgaste. A oposicao vai explorar isso o dia inteiro.`;
+    }
+    if (state.stats.inflation > 14) {
+      return `Preco alto e governo confuso: "${latest.title}" entrega um prato cheio para o Congresso bater no Planalto.`;
+    }
+    return `Mesmo quando o governo acerta um pouco, "${latest.title}" mostra que ainda ha espaco para confronto politico.`;
+  }
+
+  if (profile.stance === "pro-governo") {
+    if (state.stats.gdp > country().start.gdp + 0.1) {
+      return `Tem resultado chegando. "${latest.title}" prova que as medidas do governo estao comecando a responder.`;
+    }
+    if (openDecision) {
+      return `Se o governo fechar bem "${openDecision.title}", muda o humor politico e pode virar a narrativa do dia.`;
+    }
+    return `Ainda existe margem para reorganizar a comunicacao. "${latest.title}" nao encerra o jogo politico.`;
+  }
+
+  if (profile.stance === "jornalismo") {
+    if (openDecision) {
+      return `Bastidor: a equipe esta dividida sobre "${openDecision.title}". "${latest.title}" pode ganhar novas camadas nas proximas horas.`;
+    }
+    return `Nos bastidores, "${latest.title}" e tratado como teste de forca entre equipe economica, base e opiniao publica.`;
+  }
+
+  if (state.stats.unemployment > 14) {
+    return `Na ponta, o que pesa e emprego. "${latest.title}" so vai convencer mesmo se a vida real melhorar.`;
+  }
+  if (state.stats.inflation > 16) {
+    return `No fim, o povo sente no bolso. "${latest.title}" vira debate porque mercado e rua estao vendo inflacao todo dia.`;
+  }
+  if (state.stats.popularity > 58) {
+    return `Tem gente reconhecendo melhora. "${latest.title}" aparece forte porque o humor social saiu do pior momento.`;
+  }
+  return `"${latest.title}" esta rendendo debate porque cada grupo le o governo de um jeito diferente.`;
+}
+
+function buildNewsExperience() {
+  const latest = state.news[0] || { type: "Monitor", title: "Governo sob observacao", body: "O gabinete ainda tenta definir o tom do mandato.", priority: "neutral" };
+  const lead = {
+    brand: "JN Marca",
+    kicker: latest.type,
+    title: latest.title,
+    body: latest.body,
+    projection: fiscalOutlook(),
+    tone: latest.priority === "priority" ? "priority" : latest.priority === "good" ? "good" : "neutral"
+  };
+
+  const secondary = state.news.slice(0, 3).map((item, index) => ({
+    outlet: secondaryOutletName(index),
+    title: item.title,
+    body: item.body,
+    tone: item.priority === "priority" ? "priority" : item.priority === "good" ? "good" : "neutral"
+  }));
+
+  while (secondary.length < 3) {
+    secondary.push({
+      outlet: secondaryOutletName(secondary.length),
+      title: "Mercado acompanha o Planalto",
+      body: fiscalOutlook(),
+      tone: "neutral"
+    });
+  }
+
+  const social = SOCIAL_PROFILES.slice(0, 5).map((profile, index) => ({
+    ...profile,
+    avatar: profile.name.split(" ").map((part) => part[0]).slice(0, 2).join(""),
+    text: socialCommentary(profile, index),
+    stamp: `${Math.max(1, 8 - index)} min`
+  }));
+
+  return { lead, secondary, social };
+}
+
+function renderNewsPanel() {
+  setPanelHeader("Noticias", "Central de Midia", "tempo real");
+  const media = buildNewsExperience();
+  const leadCard = `
+    <article class="lead-news-card ${media.lead.tone}">
+      <div class="lead-news-top">
+        <span class="news-brand">${media.lead.brand}</span>
+        <span class="panel-chip">${media.lead.kicker}</span>
+      </div>
+      <strong>${media.lead.title}</strong>
+      <p>${media.lead.body}</p>
+      <div class="lead-news-projection">${media.lead.projection}</div>
+    </article>
+  `;
+  const secondaryCards = media.secondary.map((item) => `
+    <article class="feed-card ${item.tone}">
+      <span class="mini-label">${item.outlet}</span>
+      <strong>${item.title}</strong>
+      <p>${item.body}</p>
+    </article>
+  `).join("");
+  const socialCards = media.social.map((item) => `
+    <article class="social-card ${item.stance}">
+      <div class="social-top">
+        <div class="social-avatar">${item.avatar}</div>
+        <div>
+          <strong>${item.name}</strong>
+          <span class="mini-label">${item.handle} • ${item.stamp}</span>
+        </div>
+        <span class="social-badge ${item.stance}">${item.badge}</span>
+      </div>
+      <p>${item.text}</p>
+    </article>
+  `).join("");
+  elements.panelContent.innerHTML = `
+    <div class="media-layout">
+      ${leadCard}
+      <div class="feed-grid media-secondary">${secondaryCards}</div>
+      <div class="social-grid">${socialCards}</div>
+    </div>
+  `;
+}
+
+function renderAdvisorPanel() {
+  setPanelHeader("Conselheiro", "Centro Estrategico", "IA interna");
+  const recommended = topDecisionRecommendation();
+  const focusLine = recommended
+    ? `<div class="advisor-focus"><span class="decision-meta-chip ${decisionMetaTone(recommended.analysis.priority)}">${recommended.analysis.priority}</span><strong>${recommended.decision.title}</strong></div>`
+    : `<div class="advisor-focus"><span class="decision-meta-chip stable">janela estavel</span><strong>Sem decisao urgente no momento</strong></div>`;
+  const adviceItems = governmentAdviceItems().map((item) => `<li>${item}</li>`).join("");
+  const macroLine = fiscalOutlook();
+  const noteCards = state.advisorNotes.map((note) => `
+    <article class="advisor-note ${note.tone}">
+      <span class="mini-label">${note.title} • tick ${note.tick}</span>
+      <p>${note.body}</p>
+    </article>
+  `).join("");
+
+  elements.panelContent.innerHTML = `
+    <article class="advisor-card">
+      <span class="mini-label">Helena Duarte</span>
+      <strong>Leitura do gabinete</strong>
+      ${focusLine}
+      <p>${macroLine}</p>
+      <ul class="advisor-list">${adviceItems}</ul>
+    </article>
+    <div class="advisor-notes">${noteCards}</div>
+  `;
 }
 
 elements.playButton.addEventListener("click", () => {

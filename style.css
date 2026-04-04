@@ -788,6 +788,247 @@ body.dark-theme .slider-row input[type="range"]::-moz-range-thumb {
   align-items: center;
 }
 
+.decision-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 8px;
+}
+
+.decision-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  background: var(--surface-ghost);
+  border: 1px solid var(--line);
+  color: var(--text);
+}
+
+.decision-meta-chip.stable {
+  background: rgba(31, 79, 150, 0.12);
+  color: var(--accent);
+}
+
+.decision-meta-chip.warning {
+  background: rgba(208, 149, 33, 0.16);
+  color: var(--warn);
+}
+
+.decision-meta-chip.critical {
+  background: rgba(201, 75, 66, 0.16);
+  color: var(--bad);
+}
+
+.decision-meta-chip.recommended {
+  background: rgba(31, 155, 92, 0.14);
+  color: var(--good);
+}
+
+.decision-reason {
+  margin-top: 0;
+  font-size: 0.94rem;
+}
+
+.advisor-focus {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 10px 0 6px;
+}
+
+.advisor-list {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+  color: var(--text);
+}
+
+.advisor-notes {
+  display: grid;
+  gap: 12px;
+}
+
+.advisor-note {
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+}
+
+.advisor-note p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.advisor-note.warning {
+  border-left: 4px solid var(--warn);
+}
+
+.advisor-note.critical {
+  border-left: 4px solid var(--bad);
+}
+
+.advisor-note.stable {
+  border-left: 4px solid var(--accent);
+}
+
+.media-layout {
+  display: grid;
+  gap: 14px;
+}
+
+.lead-news-card,
+.social-card {
+  padding: 18px;
+  border-radius: 22px;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  position: relative;
+  overflow: hidden;
+}
+
+.lead-news-card.priority {
+  border-left: 6px solid var(--bad);
+}
+
+.lead-news-card.good {
+  border-left: 6px solid var(--good);
+}
+
+.lead-news-card.neutral {
+  border-left: 6px solid var(--accent);
+}
+
+.lead-news-top,
+.social-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.news-brand {
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.lead-news-card strong,
+.social-card strong {
+  display: block;
+  margin-top: 10px;
+  font-size: 1.08rem;
+}
+
+.lead-news-card p,
+.social-card p {
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.lead-news-projection {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--surface-ghost);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.media-secondary,
+.social-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.social-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.social-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--accent), var(--good));
+  color: #fff;
+  font-weight: 900;
+  flex: 0 0 auto;
+}
+
+.social-top > div:last-child {
+  display: grid;
+}
+
+.social-badge {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--line);
+  background: var(--surface-ghost);
+}
+
+.social-card.pro-governo {
+  border-left: 4px solid var(--good);
+}
+
+.social-card.pro-governo .social-badge {
+  background: rgba(31, 155, 92, 0.14);
+  color: var(--good);
+}
+
+.social-card.mercado {
+  border-left: 4px solid var(--accent);
+}
+
+.social-card.mercado .social-badge {
+  background: rgba(31, 79, 150, 0.14);
+  color: var(--accent);
+}
+
+.social-card.oposicao {
+  border-left: 4px solid var(--bad);
+}
+
+.social-card.oposicao .social-badge {
+  background: rgba(201, 75, 66, 0.14);
+  color: var(--bad);
+}
+
+.social-card.povo {
+  border-left: 4px solid var(--warn);
+}
+
+.social-card.povo .social-badge {
+  background: rgba(208, 149, 33, 0.14);
+  color: var(--warn);
+}
+
+.social-card.jornalismo {
+  border-left: 4px solid #7d6be0;
+}
+
+.social-card.jornalismo .social-badge {
+  background: rgba(125, 107, 224, 0.14);
+  color: #7d6be0;
+}
+
 .decision-actions {
   display: flex;
   gap: 8px;
