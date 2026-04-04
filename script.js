@@ -2374,6 +2374,20 @@ function relationAgreementLabel(countryItem) {
   return labels[countryItem.diplomacyType] || `Acordo de ${countryItem.diplomacyFocus || "cooperação"}`;
 }
 
+function pushDiplomacyCoverage(partner) {
+  const agreement = relationAgreementLabel(partner);
+  pushNews("Diplomacia", `Acordo assinado com ${partner.name}`, `O governo fechou um ${agreement.toLowerCase()} e ampliou sua margem externa.`, "good");
+  pushNews("JN Marca", `${partner.name} entra no radar estratégico do Planalto`, `Analistas projetam ganhos em ${partner.diplomacyFocus || "cooperação estratégica"} caso o acordo seja bem executado.`, "good");
+
+  if (["financas", "mercado", "exportacao", "cadeias", "credito"].includes(partner.diplomacyType)) {
+    pushNews("Mercado", `Setor produtivo reage ao acordo com ${partner.name}`, "A leitura inicial é de mais fluxo comercial, confiança externa e espaço para investimento.", "good");
+  } else if (["defesa", "seguranca", "corredores"].includes(partner.diplomacyType)) {
+    pushNews("Política", `Base e oposição disputam narrativa sobre pacto com ${partner.name}`, "Enquanto aliados falam em força estratégica, críticos questionam custo e prioridade do movimento.", "neutral");
+  } else {
+    pushNews("Análise", `Diplomacia com ${partner.name} mexe com projeções do governo`, `A tendência é de impacto gradual em ${partner.diplomacyFocus || "frentes estratégicas"} e maior visibilidade internacional.`, "neutral");
+  }
+}
+
 function signDiplomaticDeal(countryId) {
   if (state.diplomacy[countryId]) {
     return;
@@ -2406,8 +2420,12 @@ function signDiplomaticDeal(countryId) {
   }
 
   normalizeStats();
-  pushNews("Diplomacia", `Acordo assinado com ${partner.name}`, `O governo fechou um ${relationAgreementLabel(partner).toLowerCase()} e ampliou sua margem externa.`, "good");
+  pushDiplomacyCoverage(partner);
   pushEvent(`Acordo com ${partner.name}`, `A relação bilateral avança com foco em ${partner.diplomacyFocus || "cooperação estratégica"}.`, "good");
+  updateHeadline(`Acordo assinado com ${partner.name}`, `A diplomacia ganhou tração com foco em ${partner.diplomacyFocus || "cooperação estratégica"}.`);
+  if (state.currentPanel === "news") {
+    renderNewsPanel();
+  }
   if (state.currentPanel === "world") {
     renderWorldPanel();
   }
