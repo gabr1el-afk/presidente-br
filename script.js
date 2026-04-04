@@ -375,13 +375,159 @@ const DECISION_LIBRARY = [
         impact: "A permanencia do time amplia a leitura de desgaste e paralisia."
       }
     },
+  },
+  {
+    id: "environmental-policy",
+    title: "Implementar política ambiental rigorosa?",
+    body: "ONGs e países parceiros pressionam por metas de redução de emissões e proteção florestal.",
+    duration: 6000,
+    tags: ["Ambiente", "Internacional"],
+    options: {
+      approve: {
+        label: "Implementar",
+        immediate: { popularity: 3, cash: -12, gdp: -0.01, inflation: 0.1 },
+        overTime: { popularity: 0.00004, gdp: 0.00002 },
+        approval: { saude: 2, educacao: 1 },
+        mood: "good",
+        impact: "O governo ganha imagem verde, mas setores poluentes reclamam."
+      },
+      reject: {
+        label: "Abrandar",
+        immediate: { popularity: -2, cash: 6, gdp: 0.02 },
+        overTime: { popularity: -0.00003 },
+        approval: { economia: -2 },
+        mood: "neutral",
+        impact: "A economia industrial respira, mas a crítica internacional aumenta."
+      }
+    },
     timeoutPenalty: {
-      immediate: { popularity: -3, cash: -3 },
-      overTime: { popularity: -0.00005 },
-      approval: { economia: -1, seguranca: -2 },
+      immediate: { popularity: -3, cash: -8 },
+      overTime: { popularity: -0.00004 },
+      approval: { saude: -1 },
       mood: "bad",
-      impact: "A indefiniÃ§Ã£o alimentou rumores, vazamentos e a crise politica."
+      impact: "A inação ambiental gerou protestos e sanções internacionais."
     }
+  },
+  {
+    id: "tech-innovation",
+    title: "Investir em inovação tecnológica nacional?",
+    body: "Empresas de tecnologia propõem subsídios para startups e centros de pesquisa.",
+    duration: 6500,
+    tags: ["Tecnologia", "Economia"],
+    options: {
+      approve: {
+        label: "Investir",
+        immediate: { cash: -18, gdp: 0.02, unemployment: -0.3, inflation: 0.2 },
+        overTime: { gdp: 0.00005, unemployment: -0.00004 },
+        approval: { economia: 3, educacao: 2 },
+        mood: "good",
+        impact: "O ecossistema tech cresce, mas o déficit público aumenta."
+      },
+      reject: {
+        label: "Priorizar outros",
+        immediate: { cash: 12, popularity: -1 },
+        overTime: { gdp: -0.00002 },
+        approval: { economia: -2 },
+        mood: "neutral",
+        impact: "Recursos vão para áreas tradicionais, mas o gap tecnológico persiste."
+      }
+    },
+    timeoutPenalty: {
+      immediate: { gdp: -0.01, unemployment: 0.2 },
+      overTime: { unemployment: 0.00003 },
+      approval: { educacao: -2 },
+      mood: "bad",
+      impact: "A falta de foco em tech deixou o país para trás na corrida global."
+    }
+  },
+  {
+    id: "trade-agreement",
+    title: "Negociar acordo comercial com bloco regional?",
+    body: "Vizinhos propõem redução de tarifas e integração econômica mais profunda.",
+    duration: 5800,
+    tags: ["Comércio", "Diplomacia"],
+    options: {
+      approve: {
+        label: "Negociar",
+        immediate: { gdp: 0.03, cash: 8, popularity: 1 },
+        overTime: { gdp: 0.00003 },
+        approval: { economia: 2 },
+        mood: "good",
+        impact: "O comércio regional floresce, mas alguns setores domésticos reclamam."
+      },
+      reject: {
+        label: "Recusar",
+        immediate: { popularity: -1, gdp: -0.01 },
+        overTime: { gdp: -0.00002 },
+        approval: { economia: -1 },
+        mood: "neutral",
+        impact: "A autonomia comercial é mantida, mas oportunidades são perdidas."
+      }
+    },
+    timeoutPenalty: {
+      immediate: { popularity: -2, gdp: -0.02 },
+      overTime: { gdp: -0.00003 },
+      approval: { economia: -2 },
+      mood: "bad",
+      impact: "A demora na negociação esfriou as relações regionais."
+    }
+  }
+];
+
+const TREATY_LIBRARY = [
+  {
+    id: "free-trade",
+    title: "Acordo de Livre Comércio",
+    description: "Reduz tarifas e facilita trocas comerciais.",
+    benefits: { gdp: 0.02, cash: 8 },
+    costs: { popularity: -0.5 },
+    duration: 24000, // ticks
+    tags: ["Comércio", "Economia"]
+  },
+  {
+    id: "defense-pact",
+    title: "Pacto de Defesa Mútua",
+    description: "Compromisso de apoio militar em caso de agressão.",
+    benefits: { popularity: 1.5 },
+    costs: { cash: -12 },
+    duration: 36000,
+    tags: ["Segurança", "Diplomacia"]
+  },
+  {
+    id: "tech-transfer",
+    title: "Transferência Tecnológica",
+    description: "Compartilhamento de conhecimentos e patentes.",
+    benefits: { gdp: 0.03, unemployment: -0.2 },
+    costs: { cash: -10 },
+    duration: 30000,
+    tags: ["Tecnologia", "Inovação"]
+  },
+  {
+    id: "environmental-coop",
+    title: "Cooperação Ambiental",
+    description: "Projetos conjuntos de preservação e sustentabilidade.",
+    benefits: { popularity: 2 },
+    costs: { gdp: -0.01 },
+    duration: 28000,
+    tags: ["Ambiente", "Internacional"]
+  },
+  {
+    id: "investment-treaty",
+    title: "Tratado de Investimentos",
+    description: "Proteção a investidores estrangeiros e incentivos.",
+    benefits: { cash: 15, gdp: 0.025 },
+    costs: { popularity: -1 },
+    duration: 32000,
+    tags: ["Investimentos", "Economia"]
+  },
+  {
+    id: "cultural-exchange",
+    title: "Intercâmbio Cultural",
+    description: "Programas de educação e turismo mútuo.",
+    benefits: { popularity: 1 },
+    costs: { cash: -5 },
+    duration: 20000,
+    tags: ["Cultura", "Social"]
   }
 ];
 
@@ -408,11 +554,52 @@ const EVENT_LIBRARY = [
     body: "A crise política volta a dominar manchetes e redes sociais."
   },
   {
-    title: "Boom internacional de commodities",
+    title: "Pandemia global",
+    priority: "crisis",
+    effect: { gdp: -0.08, inflation: 1.2, popularity: -3, cash: -20, unemployment: 0.8 },
+    approval: { saude: -5, economia: -3 },
+    body: "Uma nova variante viral força lockdowns e sobrecarrega o sistema de saúde.",
+    chain: "health-crisis"
+  },
+  {
+    title: "Recuperação pós-pandemia",
     priority: "good",
-    effect: { gdp: 0.06, cash: 18, popularity: 2, inflation: -0.3 },
-    approval: { economia: 4 },
-    body: "As exportações aceleram e devolvem confiança ao mercado."
+    effect: { gdp: 0.05, popularity: 2, cash: 12, unemployment: -0.4 },
+    approval: { saude: 3, economia: 2 },
+    body: "Vacinas eficazes permitem reabertura gradual e recuperação econômica.",
+    chain: "health-recovery"
+  },
+  {
+    title: "Ciberataque massivo",
+    priority: "high",
+    effect: { gdp: -0.03, popularity: -2, cash: -8 },
+    approval: { seguranca: -4, economia: -2 },
+    body: "Infraestrutura crítica é comprometida, causando caos temporário.",
+    chain: "cyber-crisis"
+  },
+  {
+    title: "Descoberta de recursos naturais",
+    priority: "rare",
+    effect: { gdp: 0.04, cash: 16, popularity: 1.5 },
+    approval: { economia: 3 },
+    body: "Novos depósitos minerais elevam as projeções de receita futura.",
+    chain: "resource-boom"
+  },
+  {
+    title: "Revolta popular",
+    priority: "crisis",
+    effect: { popularity: -5, cash: -10, gdp: -0.02 },
+    approval: { seguranca: -6, economia: -2 },
+    body: "Manifestações violentas exigem intervenção federal.",
+    chain: "social-unrest"
+  },
+  {
+    title: "Aliança internacional",
+    priority: "rare",
+    effect: { popularity: 2, cash: 6 },
+    approval: { seguranca: 2 },
+    body: "Parceria estratégica fortalece posição geopolítica.",
+    chain: "alliance-formed"
   }
 ];
 
@@ -526,9 +713,9 @@ const state = {
 };
 
 const GAME_MODES = {
-  iniciante: { intervalBonus: 2200, inflationFactor: 0.8, popularityFactor: 1.15 },
+  iniciante: { intervalBonus: 2200, inflationFactor: 0.85, popularityFactor: 1.12 },
   casual: { intervalBonus: 0, inflationFactor: 1, popularityFactor: 1 },
-  veterano: { intervalBonus: -1800, inflationFactor: 1.18, popularityFactor: 0.88 }
+  veterano: { intervalBonus: -1800, inflationFactor: 1.15, popularityFactor: 0.9 }
 };
 
 function clamp(value, min, max) {
