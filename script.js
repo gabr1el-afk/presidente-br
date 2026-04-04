@@ -201,6 +201,134 @@ const DECISION_LIBRARY = [
       mood: "bad",
       impact: "A sensação de vazio de liderança tomou conta do noticiário."
     }
+  },
+  {
+    id: "fiscal-adjustment",
+    title: "Anunciar um ajuste fiscal emergencial?",
+    body: "A equipe econÃ´mica quer cortar despesas e rever contratos para segurar o caixa antes que a crise escale.",
+    duration: 5600,
+    tags: ["Fiscal", "Economia"],
+    options: {
+      approve: {
+        label: "Ajustar",
+        immediate: { cash: 24, popularity: -4, inflation: -0.5, gdp: -0.02 },
+        overTime: { cash: 0.008, inflation: -0.00008, popularity: -0.00002 },
+        approval: { economia: 3, saude: -1, educacao: -1 },
+        mood: "neutral",
+        impact: "O caixa ganha fÃ´lego, mas o custo polÃ­tico do aperto aparece rapidamente."
+      },
+      reject: {
+        label: "Adiar",
+        immediate: { popularity: 2, cash: -14, inflation: 0.6 },
+        overTime: { cash: -0.008, inflation: 0.00008 },
+        approval: { economia: -4 },
+        mood: "bad",
+        impact: "O alÃ­vio polÃ­tico Ã© curto, enquanto o risco fiscal aumenta."
+      }
+    },
+    timeoutPenalty: {
+      immediate: { cash: -10, inflation: 0.4, popularity: -2 },
+      overTime: { inflation: 0.00005 },
+      approval: { economia: -3 },
+      mood: "bad",
+      impact: "A demora em reagir ampliou a desconfianÃ§a sobre a capacidade de ajuste do governo."
+    }
+  },
+  {
+    id: "jobs-plan",
+    title: "Lancar um programa nacional de empregos?",
+    body: "Empresarios e governadores defendem um pacote de obras e credito para destravar contratacoes.",
+    duration: 6100,
+    tags: ["Emprego", "Economia"],
+    options: {
+      approve: {
+        label: "Lancar",
+        immediate: { gdp: 0.06, unemployment: -0.6, cash: -20, popularity: 3, inflation: 0.2 },
+        overTime: { gdp: 0.00008, unemployment: -0.00008, cash: -0.005 },
+        approval: { economia: 3, educacao: 1 },
+        mood: "good",
+        impact: "O mercado de trabalho reage, mas o Tesouro sente o custo do impulso."
+      },
+      reject: {
+        label: "Esperar",
+        immediate: { cash: 10, unemployment: 0.3, popularity: -3 },
+        overTime: { unemployment: 0.00005, popularity: -0.00004 },
+        approval: { economia: -3 },
+        mood: "bad",
+        impact: "A prudencia fiscal preserva caixa, mas a pressÃ£o por vagas aumenta."
+      }
+    },
+    timeoutPenalty: {
+      immediate: { unemployment: 0.4, popularity: -2 },
+      overTime: { unemployment: 0.00004 },
+      approval: { economia: -2 },
+      mood: "bad",
+      impact: "Sem resposta, a agenda de emprego perdeu forÃ§a e a cobranÃ§a cresceu."
+    }
+  },
+  {
+    id: "education-boost",
+    title: "Acelerar um plano de modernizacao da educacao?",
+    body: "Tecnicos defendem ampliar conectividade, formaÃ§Ã£o e escolas integrais para elevar produtividade futura.",
+    duration: 6400,
+    tags: ["Educacao", "Social"],
+    options: {
+      approve: {
+        label: "Investir",
+        immediate: { cash: -16, popularity: 2, gdp: 0.01 },
+        overTime: { gdp: 0.0001, popularity: 0.00003 },
+        approval: { educacao: 7, economia: 1 },
+        mood: "good",
+        impact: "A medida custa agora, mas melhora a perspectiva de crescimento e capital humano."
+      },
+      reject: {
+        label: "Postergar",
+        immediate: { cash: 9, popularity: -2 },
+        overTime: { gdp: -0.00005, popularity: -0.00002 },
+        approval: { educacao: -6 },
+        mood: "bad",
+        impact: "O caixa respira, mas a mensagem de curto prazo pesa contra o futuro do pais."
+      }
+    },
+    timeoutPenalty: {
+      immediate: { popularity: -1, gdp: -0.01 },
+      overTime: { gdp: -0.00004 },
+      approval: { educacao: -3 },
+      mood: "bad",
+      impact: "A falta de decisÃ£o travou uma agenda vista como central para o futuro."
+    }
+  },
+  {
+    id: "cabinet-crisis",
+    title: "Fazer uma reforma ministerial para conter a crise politica?",
+    body: "Aliados cobram troca de ministros e reorganizacao da base para reduzir desgaste e estancar vazamentos.",
+    duration: 5200,
+    tags: ["Politica", "Popularidade"],
+    options: {
+      approve: {
+        label: "Reformar",
+        immediate: { popularity: 2, cash: -6, gdp: 0.01 },
+        overTime: { popularity: 0.00005, cash: -0.001 },
+        approval: { seguranca: 1, economia: 1 },
+        mood: "neutral",
+        impact: "A troca de comando passa sensaÃ§Ã£o de reaÃ§Ã£o, mas abre novas disputas internas."
+      },
+      reject: {
+        label: "Manter",
+        immediate: { popularity: -4, cash: -4, gdp: -0.02 },
+        overTime: { popularity: -0.00006 },
+        approval: { economia: -1, seguranca: -2 },
+        mood: "bad",
+        impact: "A permanencia do time amplia a leitura de desgaste e paralisia."
+      }
+    },
+    timeoutPenalty: {
+      immediate: { popularity: -3, cash: -3 },
+      overTime: { popularity: -0.00005 },
+      approval: { economia: -1, seguranca: -2 },
+      mood: "bad",
+      impact: "A indefiniÃ§Ã£o alimentou rumores, vazamentos e a crise politica."
+    }
   }
 ];
 
@@ -782,7 +910,7 @@ function decisionClassification(decision) {
       recommendation = (effectsApprove.inflation || 0) < (effectsReject.inflation || 0) ? "approve" : "reject";
       reason = "Segurar preços agora evita pressão acumulada sobre aprovação e consumo.";
     }
-  } else if ((effectsApprove.cash || 0) > 0 || (effectsReject.cash || 0) > 0 || decision.tags.includes("Economia")) {
+  } else if ((effectsApprove.cash || 0) > 0 || (effectsReject.cash || 0) > 0 || decision.tags.includes("Economia") || decision.tags.includes("Fiscal")) {
     category = "Fiscal e crescimento";
     if (context.cashCritical) {
       priority = "crítica";
@@ -797,7 +925,7 @@ function decisionClassification(decision) {
       recommendation = (effectsApprove.cash || 0) + (effectsApprove.gdp || 0) >= (effectsReject.cash || 0) + (effectsReject.gdp || 0) ? "approve" : "reject";
       reason = "A leitura atual busca equilíbrio entre arrecadação e expansão econômica.";
     }
-  } else if ((effectsApprove.popularity || 0) > 0 || (effectsReject.popularity || 0) > 0 || decision.tags.includes("Popularidade") || decision.tags.includes("Social")) {
+  } else if ((effectsApprove.popularity || 0) > 0 || (effectsReject.popularity || 0) > 0 || decision.tags.includes("Popularidade") || decision.tags.includes("Social") || decision.tags.includes("Politica")) {
     category = "Estabilidade social";
     if (context.popularityCritical) {
       priority = "crítica";
@@ -907,11 +1035,72 @@ function normalizeStats() {
   });
 }
 
+function decisionWeight(decision) {
+  let weight = 1;
+  const tags = decision.tags || [];
+
+  if (tags.includes("Fiscal") || decision.id === "tax-cut") {
+    if (state.stats.cash < 40) weight += 4;
+    if (calculateEconomy().saldo < 0) weight += 4;
+  }
+
+  if (tags.includes("Social") || tags.includes("Popularidade")) {
+    if (state.stats.popularity < 40) weight += 4;
+    if (state.stats.popularity < 30) weight += 3;
+  }
+
+  if (tags.includes("InflaÃ§Ã£o") || decision.id === "fiscal-adjustment") {
+    if (state.stats.inflation > 14) weight += 4;
+    if (state.stats.inflation > 20) weight += 3;
+  }
+
+  if (tags.includes("Emprego") || tags.includes("Educacao") || decision.id === "tax-cut") {
+    if (state.stats.unemployment > 12) weight += 4;
+    if (state.stats.gdp <= country().start.gdp + 0.03) weight += 3;
+  }
+
+  if (tags.includes("Politica") || tags.includes("SeguranÃ§a")) {
+    if (state.stats.popularity < 35) weight += 3;
+    if (crisisPressure() >= 3) weight += 2;
+  }
+
+  if (state.activeDecisions.some((item) => item.id === decision.id)) {
+    weight = 0;
+  }
+
+  return Math.max(weight, 0);
+}
+
+function pickDecisionTemplate() {
+  const weightedPool = DECISION_LIBRARY
+    .map((decision) => ({ decision, weight: decisionWeight(decision) }))
+    .filter((entry) => entry.weight > 0);
+
+  if (!weightedPool.length) {
+    return null;
+  }
+
+  const totalWeight = weightedPool.reduce((sum, entry) => sum + entry.weight, 0);
+  let roll = Math.random() * totalWeight;
+  for (const entry of weightedPool) {
+    roll -= entry.weight;
+    if (roll <= 0) {
+      return entry.decision;
+    }
+  }
+
+  return weightedPool[weightedPool.length - 1].decision;
+}
+
 function spawnDecision() {
   if (state.activeDecisions.length >= 3) {
     return;
   }
-  const template = JSON.parse(JSON.stringify(DECISION_LIBRARY[Math.floor(Math.random() * DECISION_LIBRARY.length)]));
+  const sourceDecision = pickDecisionTemplate();
+  if (!sourceDecision) {
+    return;
+  }
+  const template = JSON.parse(JSON.stringify(sourceDecision));
   template.deadline = tickAtual + template.duration;
   state.activeDecisions.unshift(template);
   state.activeDecisions = state.activeDecisions.slice(0, 3);
@@ -933,7 +1122,60 @@ function processDecisionTimeouts() {
   }
 }
 
-function applyDecisionEffect(effect, title) {
+function getDecisionFinanceAdjustments(decisionId, optionKey) {
+  const adjustments = {
+    "tax-cut": {
+      approve: { nivelImposto: -6, industria: 4, comercio: 2 },
+      reject: { nivelImposto: 3, industria: -2 }
+    },
+    "social-pack": {
+      approve: { gastoSocial: 8, gastoSaude: 2 },
+      reject: { gastoSocial: -6 }
+    },
+    "imports": {
+      approve: { comercioExterior: 8, comercio: 4, industria: -2 },
+      reject: { comercioExterior: -5, industria: 3 }
+    },
+    "security-plan": {
+      approve: { gastoSeguranca: 8, gastoDefesa: 2 },
+      reject: { gastoSeguranca: -5, eficienciaEstado: 1 }
+    },
+    "fiscal-adjustment": {
+      approve: { gastoSocial: -4, gastoInfraestrutura: -3, eficienciaEstado: 6 },
+      reject: { gastoSocial: 2, eficienciaEstado: -3 }
+    },
+    "jobs-plan": {
+      approve: { gastoInfraestrutura: 6, industria: 4, tecnologia: 2 },
+      reject: { gastoInfraestrutura: -3, industria: -2 }
+    },
+    "education-boost": {
+      approve: { gastoEducacao: 8, tecnologia: 4 },
+      reject: { gastoEducacao: -5 }
+    },
+    "cabinet-crisis": {
+      approve: { eficienciaEstado: 4, gastoSeguranca: 1 },
+      reject: { eficienciaEstado: -4 }
+    }
+  };
+
+  return adjustments[decisionId]?.[optionKey] || null;
+}
+
+function applyFinanceAdjustments(decisionId, optionKey) {
+  const changes = getDecisionFinanceAdjustments(decisionId, optionKey);
+  if (!changes) {
+    return;
+  }
+
+  Object.entries(changes).forEach(([key, delta]) => {
+    state.finance[key] = clamp((state.finance[key] || 0) + delta, 0, 100);
+    if (key === "nivelImposto") {
+      state.stats.taxRate = state.finance[key];
+    }
+  });
+}
+
+function applyDecisionEffect(effect, title, decisionId = null, optionKey = null) {
   state.previousStats = { ...state.stats };
   Object.entries(effect.immediate).forEach(([key, value]) => {
     state.stats[key] += value;
@@ -945,6 +1187,9 @@ function applyDecisionEffect(effect, title) {
     Object.entries(effect.approval).forEach(([key, value]) => {
       state.approval[key] += value;
     });
+  }
+  if (decisionId && optionKey) {
+    applyFinanceAdjustments(decisionId, optionKey);
   }
   normalizeStats();
   pushEvent(title, effect.impact, effect.mood);
@@ -960,7 +1205,7 @@ function flushQueuedDecisions() {
   const queued = [...state.queuedDecisions];
   state.queuedDecisions = [];
   queued.forEach((entry) => {
-    applyDecisionEffect(entry.effect, entry.title);
+    applyDecisionEffect(entry.effect, entry.title, entry.decisionId, entry.optionKey);
   });
   updateAlertState();
   renderAll();
@@ -983,7 +1228,9 @@ function answerDecision(id, option) {
       state.activeDecisions = state.activeDecisions.filter((item) => item !== decision);
       state.queuedDecisions.push({
         effect: decision.options[option],
-        title: queuedTitle
+        title: queuedTitle,
+        decisionId: decision.id,
+        optionKey: option
       });
       pushEvent("Decisão aguardando execução", `${decision.title} foi definida e entrará em vigor quando o jogo voltar para Play.`, "neutral");
       pushNews("Gabinete", `${decision.title} foi registrada em espera`, "A medida só será aplicada quando o jogo voltar a rodar.");
@@ -996,7 +1243,7 @@ function answerDecision(id, option) {
   animateDecisionFeedback(decision.id, severity);
   playTone(option === "approve" ? "good" : "click");
   state.activeDecisions = state.activeDecisions.filter((item) => item !== decision);
-  applyDecisionEffect(decision.options[option], decisionTitle);
+  applyDecisionEffect(decision.options[option], decisionTitle, decision.id, option);
   updateAlertState();
   renderAll();
   return;
