@@ -1584,7 +1584,7 @@ function bindEconomyControls() {
       const nextValue = Number(input.value);
       input.style.setProperty("--range-progress", `${input.value}%`);
 
-      if (key.startsWith("gasto") && key !== "eficienciaEstado") {
+      if (key.startsWith("gasto") && key !== "eficienciaEstado" && nextValue > state.finance[key]) {
         const projectedFinance = { ...state.finance, [key]: nextValue };
         const projectedEconomy = calculateEconomyForFinance(projectedFinance);
         const allowedDeficit = Math.max(6, Math.min(32, state.stats.cash * 0.12 + 8));
