@@ -492,6 +492,7 @@ const state = {
   advisorNotes: [],
   events: [],
   diplomacy: {},
+  carouselPositions: {},
   audioContext: null,
   decisionClockMs: 0,
   lastDecisionHeartbeat: Date.now(),
@@ -612,6 +613,7 @@ function initSimulation() {
   state.advisorNotes = [];
   state.events = [];
   state.diplomacy = {};
+  state.carouselPositions = {};
   state.audioContext = null;
   state.decisionClockMs = 0;
   state.lastDecisionHeartbeat = Date.now();
@@ -2474,7 +2476,7 @@ function renderCountrySelection() {
   });
 }
 
-function initCarouselControls(scope, selector) {
+function initCarouselControls(scope, selector, positionKey) {
   const root = scope.querySelector(selector);
   if (!root) {
     return;
@@ -2490,6 +2492,15 @@ function initCarouselControls(scope, selector) {
     const firstCard = track.querySelector(".country-card");
     return firstCard ? firstCard.getBoundingClientRect().width + 14 : 340;
   };
+
+  const savedPosition = state.carouselPositions[positionKey] || 0;
+  if (savedPosition > 0) {
+    track.scrollLeft = savedPosition;
+  }
+
+  track.addEventListener("scroll", () => {
+    state.carouselPositions[positionKey] = track.scrollLeft;
+  }, { passive: true });
 
   prev.addEventListener("click", () => {
     track.scrollBy({ left: -step(), behavior: "smooth" });
@@ -2531,7 +2542,7 @@ function renderWorldPanel() {
   elements.panelContent.querySelectorAll(".diplomacy-btn").forEach((button) => {
     button.addEventListener("click", () => signDiplomaticDeal(button.dataset.country));
   });
-  initCarouselControls(elements.panelContent, '[data-carousel-root="diplomacy"]');
+  initCarouselControls(elements.panelContent, '[data-carousel-root="diplomacy"]', "diplomacy");
 }
 
 function renderCountrySelection() {
@@ -2574,7 +2585,7 @@ function renderCountrySelection() {
       initSimulation();
     });
   });
-  initCarouselControls(elements.resultGrid, '[data-carousel-root="countries"]');
+  initCarouselControls(elements.resultGrid, '[data-carousel-root="countries"]', "countries");
 }
 
 elements.playButton.addEventListener("click", () => {
