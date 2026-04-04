@@ -2450,6 +2450,69 @@ function renderCountrySelection() {
   });
 }
 
+function renderWorldPanel() {
+  setPanelHeader("Relações", "Diplomacia Internacional", `${allPlayableCountries().length - 1} países`);
+  const cards = allPlayableCountries()
+    .filter((item) => item.id !== state.currentCountryId)
+    .map((item) => `
+      <article class="country-card diplomacy-card">
+        <div class="country-row">
+          <div class="country-identity">
+            <img class="flag-badge" src="${item.brandImage}" alt="${item.name}">
+            <div class="country-copy">
+              <strong class="country-name">${item.name}</strong>
+              <span class="country-subtitle">${relationAgreementLabel(item)}</span>
+            </div>
+          </div>
+          <span class="country-meta">${relationStatusFor(item.id)}</span>
+        </div>
+        <p class="country-summary">Foco: ${item.diplomacyFocus || "cooperação econômica"}.</p>
+        <button class="country-btn diplomacy-btn" data-country="${item.id}" ${state.diplomacy[item.id] ? "disabled" : ""}>${state.diplomacy[item.id] ? "Acordo ativo" : "Firmar acordo"}</button>
+      </article>
+    `).join("");
+
+  elements.panelContent.innerHTML = `<div class="carousel-shell diplomacy-carousel">${cards}</div>`;
+  elements.panelContent.querySelectorAll(".diplomacy-btn").forEach((button) => {
+    button.addEventListener("click", () => signDiplomaticDeal(button.dataset.country));
+  });
+}
+
+function renderCountrySelection() {
+  const countries = allPlayableCountries()
+    .filter((item) => item.id !== state.currentCountryId)
+    .map((item) => `
+      <article class="country-card country-select-card">
+        <div class="country-row">
+          <div class="country-identity">
+            <img class="flag-badge" src="${item.brandImage}" alt="${item.name}">
+            <div class="country-copy">
+              <strong class="country-name">${item.name}</strong>
+              <span class="country-subtitle">${item.difficultyName}</span>
+            </div>
+          </div>
+          <span class="country-chip">${shortMoney(item.start.gdp)}</span>
+        </div>
+        <p class="country-summary">Inflação ${shortPercent(item.start.inflation)} • Desemprego ${shortPercent(item.start.unemployment)} • Foco externo em ${item.diplomacyFocus || "cooperação"}.</p>
+        <button class="country-btn" data-country="${item.id}">Governar</button>
+      </article>
+    `).join("");
+
+  elements.endgameTitle.textContent = "Escolha o próximo país";
+  elements.endgameText.textContent = "Outros governos em tensão também procuram liderança para atravessar crise, inflação e disputa internacional.";
+  elements.endgameActions.innerHTML = "";
+  elements.resultGrid.innerHTML = `<div class="carousel-shell country-carousel">${countries}</div>`;
+  elements.resultGrid.querySelectorAll(".country-btn").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.currentCountryId = button.dataset.country;
+      state.termNumber = 1;
+      state.difficultyLevel = 1;
+      document.body.classList.remove("reelection-mode");
+      elements.endgameOverlay.classList.add("hidden");
+      initSimulation();
+    });
+  });
+}
+
 elements.playButton.addEventListener("click", () => {
   jogoRodando = true;
   flushQueuedDecisions();
