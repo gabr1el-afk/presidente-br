@@ -603,8 +603,8 @@ function applyMacroDrift() {
   normalizeStats();
 }
 
-function calculateEconomy() {
-  const f = state.finance;
+function calculateEconomyForFinance(finance) {
+  const f = finance;
   const mode = GAME_MODES[state.settings.gameMode];
   const pibBase = Math.max(state.stats.gdp, 0.1);
   const pibEscala = pibBase * 1000;
@@ -649,6 +649,10 @@ function calculateEconomy() {
   popularityDelta += (f.eficienciaEstado - 50) * 0.004 * mode.popularityFactor;
 
   return { receita, gastoTotal, saldo, exportacao, recursosNaturais, gdpDelta, inflationDelta, unemploymentDelta, popularityDelta };
+}
+
+function calculateEconomy() {
+  return calculateEconomyForFinance(state.finance);
 }
 
 function sliderRow(key, label, value) {
@@ -1570,6 +1574,49 @@ function refreshPassivePanel() {
   if (!panelNeedsStableDom()) {
     renderPanel();
   }
+}
+
+function bindEconomyControls() {
+  elements.panelContent.querySelectorAll("input[data-finance]").forEach((input) => {
+    input.style.setProperty("--range-progress", `${input.value}%`);
+    input.addEventListener("input", () => {
+      const key = input.dataset.finance;
+      const nextValue = Number(input.value);
+      input.style.setProperty("--range-progress", `${input.value}%`);
+
+      if (key.startsWith("gasto") && key !== "eficienciaEstado") {
+        const projectedFinance = { ...state.finance, [key]: nextValue };
+        const projectedEconomy = calculateEconomyForFinance(projectedFinance);
+        const allowedDeficit = Math.max(6, Math.min(32, state.stats.cash * 0.12 + 8));
+
+        if (projectedEconomy.saldo < -allowedDeficit) {
+          input.value = state.finance[key];
+          input.style.setProperty("--range-progress", `${input.value}%`);
+          showAlertPopup("deficit", "DÃ©ficit", `Esse aumento levaria o saldo para ${projectedEconomy.saldo.toFixed(2)} e pressionaria demais o caixa.`);
+          return;
+        }
+      }
+
+      state.finance[key] = nextValue;
+      if (key === "nivelImposto") {
+        state.stats.taxRate = nextValue;
+      }
+
+      const valueLabel = elements.panelContent.querySelector(`[data-finance-value="${key}"]`);
+      if (valueLabel) {
+        valueLabel.textContent = Math.round(nextValue);
+      }
+      playTone("click");
+      renderStatsStrip();
+      updateAlertState();
+    });
+
+    input.addEventListener("change", () => {
+      if (state.currentPanel === "economy") {
+        renderEconomyPanel();
+      }
+    });
+  });
 }
 
 elements.playButton.addEventListener("click", () => {
