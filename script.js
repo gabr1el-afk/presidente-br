@@ -2450,6 +2450,32 @@ function renderCountrySelection() {
   });
 }
 
+function initCarouselControls(scope, selector) {
+  const root = scope.querySelector(selector);
+  if (!root) {
+    return;
+  }
+  const track = root.querySelector(".carousel-shell");
+  const prev = root.querySelector('[data-carousel-dir="prev"]');
+  const next = root.querySelector('[data-carousel-dir="next"]');
+  if (!track || !prev || !next) {
+    return;
+  }
+
+  const step = () => {
+    const firstCard = track.querySelector(".country-card");
+    return firstCard ? firstCard.getBoundingClientRect().width + 14 : 340;
+  };
+
+  prev.addEventListener("click", () => {
+    track.scrollBy({ left: -step(), behavior: "smooth" });
+  });
+
+  next.addEventListener("click", () => {
+    track.scrollBy({ left: step(), behavior: "smooth" });
+  });
+}
+
 function renderWorldPanel() {
   setPanelHeader("Relações", "Diplomacia Internacional", `${allPlayableCountries().length - 1} países`);
   const cards = allPlayableCountries()
@@ -2471,10 +2497,17 @@ function renderWorldPanel() {
       </article>
     `).join("");
 
-  elements.panelContent.innerHTML = `<div class="carousel-shell diplomacy-carousel">${cards}</div>`;
+  elements.panelContent.innerHTML = `
+    <div class="carousel-frame" data-carousel-root="diplomacy">
+      <button class="carousel-arrow prev" data-carousel-dir="prev" aria-label="Voltar">‹</button>
+      <div class="carousel-shell diplomacy-carousel">${cards}</div>
+      <button class="carousel-arrow next" data-carousel-dir="next" aria-label="Avançar">›</button>
+    </div>
+  `;
   elements.panelContent.querySelectorAll(".diplomacy-btn").forEach((button) => {
     button.addEventListener("click", () => signDiplomaticDeal(button.dataset.country));
   });
+  initCarouselControls(elements.panelContent, '[data-carousel-root="diplomacy"]');
 }
 
 function renderCountrySelection() {
@@ -2500,7 +2533,13 @@ function renderCountrySelection() {
   elements.endgameTitle.textContent = "Escolha o próximo país";
   elements.endgameText.textContent = "Outros governos em tensão também procuram liderança para atravessar crise, inflação e disputa internacional.";
   elements.endgameActions.innerHTML = "";
-  elements.resultGrid.innerHTML = `<div class="carousel-shell country-carousel">${countries}</div>`;
+  elements.resultGrid.innerHTML = `
+    <div class="carousel-frame" data-carousel-root="countries">
+      <button class="carousel-arrow prev" data-carousel-dir="prev" aria-label="Voltar">‹</button>
+      <div class="carousel-shell country-carousel">${countries}</div>
+      <button class="carousel-arrow next" data-carousel-dir="next" aria-label="Avançar">›</button>
+    </div>
+  `;
   elements.resultGrid.querySelectorAll(".country-btn").forEach((button) => {
     button.addEventListener("click", () => {
       state.currentCountryId = button.dataset.country;
@@ -2511,6 +2550,7 @@ function renderCountrySelection() {
       initSimulation();
     });
   });
+  initCarouselControls(elements.resultGrid, '[data-carousel-root="countries"]');
 }
 
 elements.playButton.addEventListener("click", () => {
